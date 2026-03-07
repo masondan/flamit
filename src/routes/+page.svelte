@@ -20,6 +20,15 @@
 
 	let spinAudio = null;
 
+	function stopSpinAudio() {
+		if (spinAudio) {
+			spinAudio.pause();
+			spinAudio.currentTime = 0;
+			spinAudio.onended = null;
+			spinAudio = null;
+		}
+	}
+
 	function buildStoryReelItems(storyList) {
 		return storyList.map((s, i) => ({
 			label: `Story ${i + 1}`,
@@ -45,16 +54,20 @@
 		return available[Math.floor(Math.random() * available.length)];
 	}
 
+	$: if ($gameState.timerRunning) stopSpinAudio();
+
 	async function handleSpin() {
-		if ($isSpinning || ($isLocked && !$gameState.isFreeChoice)) return;
+		if ($isSpinning || $gameState.timerRunning || ($isLocked && !$gameState.isFreeChoice)) return;
 
 		const state = $gameState;
 		const storyIdx = getNextStoryIndex(state.usedStoryIndices, stories.length);
 
 		gameState.update(s => ({ ...s, spinning: true }));
 
+		stopSpinAudio();
 		try {
 			spinAudio = new Audio('/sounds/wheel-of-fortune.mp3');
+			spinAudio.onended = () => { spinAudio = null; };
 			spinAudio.play().catch(() => {});
 		} catch {}
 
@@ -66,10 +79,6 @@
 
 		await storyPromise;
 		const landedFormIdx = await formPromise;
-
-		if (spinAudio) {
-			spinAudio.onended = () => { spinAudio = null; };
-		}
 
 		const landedFormItem = formReelItems[landedFormIdx];
 		const form = landedFormItem?.form || FORMAT_REEL[0];
@@ -102,6 +111,7 @@
 	}
 
 	function handleReset() {
+		stopSpinAudio();
 		gameState.reset();
 		currentStory = null;
 		currentForm = null;
@@ -151,7 +161,7 @@
 	<div class="spin-area">
 		<SpinButton
 			spinning={$isSpinning}
-			disabled={$isLocked && !$gameState.isFreeChoice}
+			disabled={$gameState.timerRunning || ($isLocked && !$gameState.isFreeChoice)}
 			onClick={handleSpin}
 		/>
 	</div>

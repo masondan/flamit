@@ -8,6 +8,8 @@
 	let remainingSeconds = 0;
 	let running = false;
 	let alarmAudio = null;
+	let alarmCtx = null;
+	let alarmSource = null;
 
 	const TIMER_KEY = 'flamit_timer';
 
@@ -59,11 +61,13 @@
 
 	function startInterval() {
 		clearInterval(interval);
+		gameState.update(s => ({ ...s, timerRunning: true }));
 		interval = setInterval(() => {
 			remainingSeconds = Math.max(0, remainingSeconds - 1);
 			if (remainingSeconds <= 0) {
 				running = false;
 				clearInterval(interval);
+				gameState.update(s => ({ ...s, timerRunning: false }));
 				playAlarm();
 				saveTimer();
 			}
@@ -75,11 +79,13 @@
 		if (remainingSeconds <= 0) {
 			remainingSeconds = durationMinutes * 60;
 			running = false;
+			gameState.update(s => ({ ...s, timerRunning: false }));
 			saveTimer();
 			return;
 		}
 
 		running = !running;
+		gameState.update(s => ({ ...s, timerRunning: running }));
 		playDing();
 		if (running) {
 			startInterval();
@@ -89,27 +95,35 @@
 		saveTimer();
 	}
 
-	function playAlarm() {
+	async function playAlarm() {
 		stopAlarm();
 		try {
-			alarmAudio = new Audio('/sounds/timer-end.mp3');
-			alarmAudio.loop = true;
-			alarmAudio.play().catch(() => {});
+			alarmCtx = new (window.AudioContext || window.webkitAudioContext)();
+			const response = await fetch('/sounds/timer-end.mp3');
+			const buffer = await response.arrayBuffer();
+			const audioBuffer = await alarmCtx.decodeAudioData(buffer);
+			alarmSource = alarmCtx.createBufferSource();
+			alarmSource.buffer = audioBuffer;
+			alarmSource.loop = true;
+			alarmSource.connect(alarmCtx.destination);
+			alarmSource.start(0);
 		} catch {}
 	}
 
 	function stopAlarm() {
-		if (alarmAudio) {
-			alarmAudio.pause();
-			alarmAudio.currentTime = 0;
-			alarmAudio = null;
+		if (alarmSource) {
+			try { alarmSource.stop(); } catch {}
+			alarmSource = null;
+		}
+		if (alarmCtx) {
+			alarmCtx.close().catch(() => {});
+			alarmCtx = null;
 		}
 	}
 
 	function playDing() {
 		try {
-			const audio = new Audio('/sounds/timer.mp3');
-			audio.play().catch(() => {});
+			new Audio('/sounds/timer.mp3').play().catch(() => {});
 		} catch {}
 	}
 
