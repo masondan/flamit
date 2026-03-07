@@ -31,15 +31,15 @@
 					return;
 				}
 
-				// Speed curve: fast for first 35%, then decelerate noticeably
+				// Speed curve: fast for first 30%, then decelerate noticeably
 				let speed;
-				const MAX_SPEED = 12;
-				if (progress < 0.35) {
-					speed = MAX_SPEED + Math.random() * 3;
+				const MAX_SPEED = 8;
+				if (progress < 0.3) {
+					speed = MAX_SPEED + Math.random() * 2;
 				} else {
-					const decelProgress = (progress - 0.35) / 0.65;
-					const ease = 1 - decelProgress * decelProgress * decelProgress;
-					speed = Math.max(0.5, MAX_SPEED * ease);
+					const decelProgress = (progress - 0.3) / 0.7;
+					const ease = 1 - decelProgress * decelProgress * decelProgress * decelProgress;
+					speed = Math.max(0.3, MAX_SPEED * ease);
 				}
 
 				offset += speed;

@@ -115,9 +115,7 @@
 		await formPromise;
 
 		if (spinAudio) {
-			spinAudio.pause();
-			spinAudio.currentTime = 0;
-			spinAudio = null;
+			spinAudio.onended = () => { spinAudio = null; };
 		}
 
 		currentStory = stories[storyIdx];

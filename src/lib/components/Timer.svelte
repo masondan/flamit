@@ -92,7 +92,7 @@
 	function playAlarm() {
 		stopAlarm();
 		try {
-			alarmAudio = new Audio('/sounds/alarm.mp3');
+			alarmAudio = new Audio('/sounds/timer-end.mp3');
 			alarmAudio.loop = true;
 			alarmAudio.play().catch(() => {});
 		} catch {}
