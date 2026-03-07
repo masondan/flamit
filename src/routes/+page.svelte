@@ -161,7 +161,7 @@
 
 <div class="content">
 	<header class="header">
-		<img class="logo" src="/logos/logo-flamit-logotype.png" alt="FlamIt" />
+		<img class="logo" src="/logos/logo-flamit-logotype-white.png" alt="FlamIt" />
 		<p class="subtitle">Spin to create</p>
 	</header>
 
