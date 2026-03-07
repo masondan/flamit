@@ -170,8 +170,7 @@
 
 	{:else}
 		<header class="page-header">
-			<h1 class="page-title">📰 Story Suggestions</h1>
-			<p class="page-subtitle">Help us build a great story list</p>
+			<h1 class="page-title">Story Stack</h1>
 		</header>
 
 		{#if submitted}
@@ -182,10 +181,10 @@
 		{:else}
 			<div class="form-section">
 				<p class="form-intro">
-					Choose up to three stories published in the last month spotlighting issues or topics that cry out for more explanation and context; that must spark questions like <em>how</em> and <em>why</em>.
+					Choose <strong>up to three stories</strong> published in the last month spotlighting topical issues or topics that cry out for more explanation and context; stories that leave your audience asking <em>how</em> and <em>why</em>.
 				</p>
 				<p class="form-intro">
-					Don't limit your choice to 'breaking news' — consider culture, social inclusion, family, tech, migration, education, politics, business, sport etc in news, reports and features.
+					Don't limit your choice to 'breaking news' — consider culture, health, social inclusion, tech, family, migration, education, politics, entertainment, business, sport etc across news, opinion, reports and features.
 				</p>
 
 				<div class="input-group">
@@ -246,6 +245,7 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--space-4);
+		background: #ffffff;
 	}
 
 	.page-header {
