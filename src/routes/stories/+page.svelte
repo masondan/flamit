@@ -1,6 +1,6 @@
 <script>
 	import { onMount } from 'svelte';
-	import { getStories, saveStories } from '$lib/data/stories.js';
+	import { getStoriesOrdered, saveStories } from '$lib/data/stories.js';
 
 	let isAdmin = false;
 	let submissions = [];
@@ -10,6 +10,12 @@
 	let entries = [{ headline: '', url: '' }];
 	let submitted = false;
 	let errorMsg = '';
+
+	// Admin: story management
+	let dangerOpen = false;
+	let selectedStoryIds = [];
+	let showDeleteModal = false;
+	let showResetModal = false;
 
 	const SUBMISSIONS_KEY = 'flamit_submissions';
 
@@ -83,7 +89,7 @@
 			submittedBy: s.name
 		}));
 
-		const existing = getStories();
+		const existing = getStoriesOrdered();
 		const isDefault = existing.length <= 2 && existing[0]?.submittedBy === 'Demo';
 		const merged = isDefault ? newStories : [...existing, ...newStories];
 
@@ -92,7 +98,7 @@
 		submissions = submissions.filter(s => !s.approved);
 		saveSubmissions(submissions);
 
-		alert(`${selected.length} story/stories added to FlamIt!`);
+		approvedStories = getStoriesOrdered();
 	}
 
 	function clearAll() {
@@ -102,13 +108,74 @@
 		}
 	}
 
+	// Story management
+	function toggleStorySelect(id) {
+		if (selectedStoryIds.includes(id)) {
+			selectedStoryIds = selectedStoryIds.filter(sid => sid !== id);
+		} else {
+			selectedStoryIds = [...selectedStoryIds, id];
+		}
+	}
+
+	function downloadAll() {
+		const stories = getStoriesOrdered();
+		const blob = new Blob([JSON.stringify(stories, null, 2)], { type: 'application/json' });
+		const url = URL.createObjectURL(blob);
+		const a = document.createElement('a');
+		a.href = url;
+		a.download = 'flamit-stories.json';
+		a.click();
+		URL.revokeObjectURL(url);
+	}
+
+	function importStories() {
+		const input = document.createElement('input');
+		input.type = 'file';
+		input.accept = '.json';
+		input.onchange = (e) => {
+			const file = e.target.files[0];
+			if (!file) return;
+			const reader = new FileReader();
+			reader.onload = (ev) => {
+				try {
+					const imported = JSON.parse(ev.target.result);
+					if (Array.isArray(imported)) {
+						saveStories(imported);
+						approvedStories = getStoriesOrdered();
+					}
+				} catch {
+					alert('Invalid JSON file.');
+				}
+			};
+			reader.readAsText(file);
+		};
+		input.click();
+	}
+
+	function deleteSelected() {
+		const stories = getStoriesOrdered().filter(s => !selectedStoryIds.includes(s.id));
+		saveStories(stories);
+		approvedStories = getStoriesOrdered();
+		selectedStoryIds = [];
+		showDeleteModal = false;
+	}
+
+	function resetFlamIt() {
+		saveStories([]);
+		approvedStories = [];
+		selectedStoryIds = [];
+		showResetModal = false;
+		localStorage.removeItem('flamit_game_state');
+		localStorage.removeItem('flamit_timer');
+	}
+
 	onMount(() => {
 		const params = new URLSearchParams(window.location.search);
 		isAdmin = params.has('admin');
 
 		if (isAdmin) {
 			submissions = loadSubmissions();
-			approvedStories = getStories();
+			approvedStories = getStoriesOrdered();
 		}
 	});
 </script>
@@ -151,7 +218,7 @@
 					Add Selected to FlamIt
 				</button>
 				<button class="btn-danger" on:click={clearAll}>
-					Clear All
+					Clear (delete All)
 				</button>
 			</div>
 		{/if}
@@ -159,12 +226,48 @@
 		{#if approvedStories.length > 0}
 			<div class="current-stories">
 				<h2 class="section-title">Current FlamIt Stories ({approvedStories.length})</h2>
-				{#each approvedStories as story}
-					<div class="story-item">
-						<span>{story.headline}</span>
-						<span class="story-by">— {story.submittedBy}</span>
+				{#each approvedStories as story (story.id)}
+					<div class="story-item" class:selectable={dangerOpen}>
+						{#if dangerOpen}
+							<label class="story-check">
+								<input
+									type="checkbox"
+									checked={selectedStoryIds.includes(story.id)}
+									on:change={() => toggleStorySelect(story.id)}
+								/>
+							</label>
+						{/if}
+						<div class="story-content">
+							<span>{story.headline}</span>
+							<span class="story-by">— {story.submittedBy}</span>
+						</div>
 					</div>
 				{/each}
+
+				<div class="story-actions">
+					<button class="btn-outline" on:click={downloadAll}>
+						Download All
+					</button>
+					<button class="btn-outline" on:click={importStories}>
+						Import
+					</button>
+				</div>
+
+				<button class="danger-toggle" on:click={() => { dangerOpen = !dangerOpen; if (!dangerOpen) selectedStoryIds = []; }}>
+					Danger zone
+					<span class="chevron" class:open={dangerOpen}>▸</span>
+				</button>
+
+				{#if dangerOpen}
+					<div class="danger-actions">
+						<button class="btn-danger" on:click={() => { showDeleteModal = true; }}>
+							Delete selected
+						</button>
+						<button class="btn-danger" on:click={() => { showResetModal = true; }}>
+							Reset FlamIt
+						</button>
+					</div>
+				{/if}
 			</div>
 		{/if}
 
@@ -175,8 +278,9 @@
 
 		{#if submitted}
 			<div class="success-state">
-				<p class="success-icon">✅</p>
-				<p class="success-text">Thanks! Your stories have been submitted.</p>
+				<img class="success-image" src="/logos/logo-media-cluster.png" alt="" />
+				<p class="success-heading">Thank you</p>
+				<p class="success-text">Your stories have been submitted</p>
 			</div>
 		{:else}
 			<div class="form-section">
@@ -188,7 +292,6 @@
 				</p>
 
 				<div class="input-group">
-					<label class="input-label">Your name</label>
 					<input
 						class="text-input"
 						type="text"
@@ -238,6 +341,30 @@
 	{/if}
 </div>
 
+{#if showDeleteModal}
+	<div class="modal-overlay" on:click={() => { showDeleteModal = false; }}>
+		<div class="modal" on:click|stopPropagation>
+			<p class="modal-text">Delete selected?</p>
+			<div class="modal-actions">
+				<button class="btn-outline modal-btn" on:click={() => { showDeleteModal = false; }}>Cancel</button>
+				<button class="btn-danger modal-btn" on:click={deleteSelected}>Delete</button>
+			</div>
+		</div>
+	</div>
+{/if}
+
+{#if showResetModal}
+	<div class="modal-overlay" on:click={() => { showResetModal = false; }}>
+		<div class="modal" on:click|stopPropagation>
+			<p class="modal-text">Delete all stories from FlamIt. Are you sure?</p>
+			<div class="modal-actions">
+				<button class="btn-outline modal-btn" on:click={() => { showResetModal = false; }}>Cancel</button>
+				<button class="btn-danger modal-btn" on:click={resetFlamIt}>Reset</button>
+			</div>
+		</div>
+	</div>
+{/if}
+
 <style>
 	.stories-page {
 		flex: 1;
@@ -272,15 +399,8 @@
 	}
 
 	.input-group {
-		margin-bottom: var(--space-3);
-	}
-
-	.input-label {
-		display: block;
-		font-size: var(--font-size-sm);
-		font-weight: var(--font-weight-semibold);
-		color: var(--color-text-secondary);
-		margin-bottom: var(--space-1);
+		margin-top: var(--space-4);
+		margin-bottom: var(--space-4);
 	}
 
 	.text-input {
@@ -304,7 +424,7 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--space-2);
-		margin-bottom: var(--space-3);
+		margin-bottom: var(--space-4);
 	}
 
 	.entry-header {
@@ -384,14 +504,22 @@
 		padding: var(--space-8) 0;
 	}
 
-	.success-icon {
-		font-size: 3rem;
-		margin-bottom: var(--space-3);
+	.success-image {
+		width: 120px;
+		height: auto;
+		margin-bottom: var(--space-4);
+	}
+
+	.success-heading {
+		font-size: var(--font-size-xl);
+		font-weight: var(--font-weight-bold);
+		color: var(--color-primary);
+		margin-bottom: var(--space-2);
 	}
 
 	.success-text {
-		font-size: var(--font-size-lg);
-		color: var(--color-text-primary);
+		font-size: var(--font-size-base);
+		color: var(--color-text-secondary);
 	}
 
 	/* Admin styles */
@@ -480,6 +608,24 @@
 		color: white;
 	}
 
+	.btn-outline {
+		background: none;
+		border: 1px solid var(--color-primary);
+		color: var(--color-primary);
+		height: var(--touch-target-min);
+		padding: 0 var(--space-4);
+		border-radius: var(--radius-md);
+		font-size: var(--font-size-sm);
+		font-weight: var(--font-weight-semibold);
+		cursor: pointer;
+		transition: all var(--transition-fast);
+	}
+
+	.btn-outline:hover {
+		background: var(--color-primary);
+		color: white;
+	}
+
 	.current-stories {
 		border-top: 1px solid var(--color-border-light);
 		padding-top: var(--space-4);
@@ -496,11 +642,108 @@
 		font-size: var(--font-size-sm);
 		padding: var(--space-2) 0;
 		border-bottom: 1px solid var(--color-border-light);
+		display: flex;
+		align-items: center;
+		gap: var(--space-2);
+	}
+
+	.story-check input {
+		width: 18px;
+		height: 18px;
+		accent-color: var(--color-error);
+		flex-shrink: 0;
+	}
+
+	.story-content {
+		flex: 1;
 	}
 
 	.story-by {
 		color: var(--color-text-muted);
 		font-size: var(--font-size-xs);
+	}
+
+	.story-actions {
+		display: flex;
+		gap: var(--space-3);
+		margin-top: var(--space-4);
+	}
+
+	.story-actions .btn-outline {
+		flex: 1;
+	}
+
+	.danger-toggle {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: var(--space-1);
+		width: 100%;
+		padding: var(--space-3) 0;
+		margin-top: var(--space-3);
+		font-size: var(--font-size-sm);
+		font-weight: var(--font-weight-semibold);
+		color: var(--color-error);
+		background: none;
+		border: none;
+		cursor: pointer;
+	}
+
+	.chevron {
+		display: inline-block;
+		transition: transform var(--transition-fast);
+		font-size: var(--font-size-sm);
+	}
+
+	.chevron.open {
+		transform: rotate(90deg);
+	}
+
+	.danger-actions {
+		display: flex;
+		gap: var(--space-3);
+		margin-top: var(--space-2);
+	}
+
+	.danger-actions .btn-danger {
+		flex: 1;
+	}
+
+	/* Modal */
+	.modal-overlay {
+		position: fixed;
+		inset: 0;
+		background: rgba(0, 0, 0, 0.5);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		z-index: 100;
+	}
+
+	.modal {
+		background: #ffffff;
+		border-radius: var(--radius-lg);
+		padding: var(--space-6);
+		max-width: 320px;
+		width: 90%;
+		text-align: center;
+	}
+
+	.modal-text {
+		font-size: var(--font-size-base);
+		color: var(--color-text-primary);
+		margin-bottom: var(--space-4);
+		line-height: var(--line-height-normal);
+	}
+
+	.modal-actions {
+		display: flex;
+		gap: var(--space-3);
+		justify-content: center;
+	}
+
+	.modal-btn {
+		min-width: 100px;
 	}
 
 	.form-section {

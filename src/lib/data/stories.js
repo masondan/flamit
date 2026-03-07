@@ -15,7 +15,29 @@ export const DEFAULT_STORIES = [
 
 const STORAGE_KEY = 'flamit_stories';
 
+function shuffle(arr) {
+	const shuffled = [...arr];
+	for (let i = shuffled.length - 1; i > 0; i--) {
+		const j = Math.floor(Math.random() * (i + 1));
+		[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+	}
+	return shuffled;
+}
+
 export function getStories() {
+	if (typeof window === 'undefined') return shuffle(DEFAULT_STORIES);
+	const stored = localStorage.getItem(STORAGE_KEY);
+	if (stored) {
+		try {
+			return shuffle(JSON.parse(stored));
+		} catch {
+			return shuffle(DEFAULT_STORIES);
+		}
+	}
+	return shuffle(DEFAULT_STORIES);
+}
+
+export function getStoriesOrdered() {
 	if (typeof window === 'undefined') return DEFAULT_STORIES;
 	const stored = localStorage.getItem(STORAGE_KEY);
 	if (stored) {
