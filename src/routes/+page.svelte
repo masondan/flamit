@@ -23,7 +23,7 @@
 	function buildStoryReelItems(storyList) {
 		return storyList.map((s, i) => ({
 			label: `Story ${i + 1}`,
-			icon: '/logos/icon-story-spinner.svg',
+			icon: '/icons/icon-story-spinner.svg',
 			story: s
 		}));
 	}
