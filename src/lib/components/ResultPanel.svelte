@@ -1,16 +1,15 @@
 <script>
 	export let story = null;
 	export let form = null;
-	export let isPickOrSpin = false;
 	export let isFreeChoice = false;
 	export let onSpinAgain = null;
 </script>
 
 {#if story && form}
 	<div class="result-panel">
-		{#if isPickOrSpin}
+		{#if isFreeChoice}
 			<p class="result-instruction">
-				🔄 <strong>Pick or Spin!</strong> Check the story below. You can <strong>keep it</strong> and choose your own format, or <strong>spin again</strong>.
+				Choose <strong>any format</strong> for the story below — or spin again!
 			</p>
 			<div class="story-link">
 				<a href={story.url} target="_blank" rel="noopener noreferrer">
@@ -18,17 +17,8 @@
 				</a>
 			</div>
 			<button class="spin-again-btn" on:click={onSpinAgain}>
-				🔄 Spin Again
+				Spin Again
 			</button>
-		{:else if isFreeChoice}
-			<p class="result-instruction">
-				Create a story in <strong>any format</strong> based on the story below OR spin again. Your choice!
-			</p>
-			<div class="story-link">
-				<a href={story.url} target="_blank" rel="noopener noreferrer">
-					{story.headline}
-				</a>
-			</div>
 		{:else}
 			<p class="result-instruction">
 				Create a <strong class="form-highlight">{form.label}</strong> story based on:

@@ -25,7 +25,6 @@ const defaults = {
 	currentFormIndex: null,
 	usedStoryIndices: [],
 	usedFormIds: [],
-	isPickOrSpin: false,
 	isFreeChoice: false,
 	timerRunning: false,
 	timerSeconds: 0,

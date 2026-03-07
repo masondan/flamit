@@ -21,44 +21,69 @@
 			const startTime = performance.now();
 			const totalDuration = duration || 5000;
 			offset = baseOffset;
-			const targetOffset = (targetIndex !== null && targetIndex !== undefined)
-				? baseOffset + targetIndex * ITEM_HEIGHT
-				: null;
+			const totalItems = items.length * ITEM_HEIGHT;
+			const hasTarget = targetIndex !== null && targetIndex !== undefined;
+
+			// For targeted mode: glide interpolation state
+			let finalOffset = hasTarget ? baseOffset + targetIndex * ITEM_HEIGHT : null;
+			let glideStartOffset = null;
+
+			// For natural mode: settle to nearest item boundary
+			let settleTarget = null;
+			let settleStart = null;
 
 			function frame(now) {
 				const elapsed = now - startTime;
 				const progress = Math.min(elapsed / totalDuration, 1);
 
-				if (progress >= 1) {
-					if (targetOffset !== null) offset = targetOffset;
-					if (resolveStop) resolveStop();
-					return;
-				}
-
-				// Speed curve: fast for first 30%, then decelerate noticeably
 				const MAX_SPEED = 7;
 				if (progress < 0.3) {
 					offset += MAX_SPEED + Math.random() * 2;
-				} else if (progress < 0.85) {
-					const decelProgress = (progress - 0.3) / 0.55;
+				} else if (progress < (hasTarget ? 0.80 : 0.75)) {
+					const phaseEnd = hasTarget ? 0.80 : 0.75;
+					const decelProgress = (progress - 0.3) / (phaseEnd - 0.3);
 					const ease = 1 - decelProgress * decelProgress * decelProgress * decelProgress;
 					offset += Math.max(0.5, MAX_SPEED * ease);
-				} else if (targetOffset !== null) {
-					// Final 15%: glide smoothly toward the target
-					const glideProgress = (progress - 0.85) / 0.15;
-					const currentMod = offset % (items.length * ITEM_HEIGHT);
-					const targetMod = targetOffset % (items.length * ITEM_HEIGHT);
-					let diff = targetMod - currentMod;
-					if (diff < 0) diff += items.length * ITEM_HEIGHT;
-					if (diff > items.length * ITEM_HEIGHT / 2) diff -= items.length * ITEM_HEIGHT;
-					const step = diff * 0.08 * (1 - glideProgress) + diff * 0.15 * glideProgress;
-					offset += Math.max(0.2, Math.abs(step)) * Math.sign(step || 1);
+				} else if (hasTarget) {
+					// Targeted: smooth interpolation to chosen item
+					if (glideStartOffset === null) {
+						glideStartOffset = offset;
+						while (finalOffset <= glideStartOffset) finalOffset += totalItems;
+						while (finalOffset - glideStartOffset > totalItems) finalOffset -= totalItems;
+					}
+					const glideProgress = (progress - 0.80) / 0.20;
+					const eased = 1 - Math.pow(1 - glideProgress, 3);
+					offset = glideStartOffset + (finalOffset - glideStartOffset) * eased;
 				} else {
-					offset += 0.3;
+					// Natural: settle smoothly to nearest item boundary
+					if (settleTarget === null) {
+						settleStart = offset;
+						// Snap to nearest item boundary 1-2 items ahead
+						const rawIndex = Math.ceil((offset - baseOffset) / ITEM_HEIGHT) + 1;
+						settleTarget = baseOffset + rawIndex * ITEM_HEIGHT;
+					}
+					const settleProgress = (progress - 0.75) / 0.25;
+					const eased = 1 - Math.pow(1 - settleProgress, 3);
+					offset = settleStart + (settleTarget - settleStart) * eased;
 				}
 
-				if (offset >= baseOffset + items.length * ITEM_HEIGHT) {
-					offset -= items.length * ITEM_HEIGHT;
+				if (offset >= baseOffset + totalItems) {
+					offset -= totalItems;
+				}
+
+				if (progress >= 1) {
+					// Snap to exact item boundary
+					if (hasTarget && finalOffset !== null) {
+						offset = finalOffset % (baseOffset + totalItems);
+						if (offset < baseOffset) offset += totalItems;
+					} else if (settleTarget !== null) {
+						offset = settleTarget % (baseOffset + totalItems);
+						if (offset < baseOffset) offset += totalItems;
+					}
+					// Calculate landed index
+					const landedIndex = Math.round((offset - baseOffset) / ITEM_HEIGHT) % items.length;
+					if (resolveStop) resolveStop(landedIndex);
+					return;
 				}
 
 				animationFrame = requestAnimationFrame(frame);
@@ -86,7 +111,6 @@
 			class="reel-strip"
 			bind:this={reelEl}
 			style="transform: translateY(-{offset - ITEM_HEIGHT}px)"
-			class:snapping={!spinning && selectedIndex !== null}
 		>
 			{#each displayItems as item, i}
 				<div
@@ -158,10 +182,6 @@
 		display: flex;
 		flex-direction: column;
 		will-change: transform;
-	}
-
-	.reel-strip.snapping {
-		transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 	}
 
 	.reel-item {

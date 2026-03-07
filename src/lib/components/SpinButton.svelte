@@ -10,11 +10,7 @@
 	disabled={disabled || spinning}
 	on:click={onClick}
 >
-	{#if spinning}
-		<span class="spin-icon">🎰</span>
-	{:else}
-		<span class="spin-label">SPIN</span>
-	{/if}
+	<span class="spin-label" class:spinning>{spinning ? 'SPIN' : 'SPIN'}</span>
 </button>
 
 <style>
@@ -71,7 +67,10 @@
 	}
 
 	.spin-button.spinning {
-		animation: pulse 0.6s ease-in-out infinite;
+		opacity: 1;
+		cursor: default;
+		animation: button-glow 1.2s ease-in-out infinite;
+		border-color: #ffd700;
 	}
 
 	.spin-label {
@@ -81,18 +80,37 @@
 		text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 	}
 
-	.spin-icon {
-		font-size: 2rem;
-		animation: wobble 0.5s ease-in-out infinite;
+	.spin-label.spinning {
+		animation: text-pulse 1.2s ease-in-out infinite;
 	}
 
-	@keyframes pulse {
-		0%, 100% { box-shadow: 0 0 20px rgba(84, 34, 176, 0.4), 0 0 40px rgba(255, 215, 0, 0.15); }
-		50% { box-shadow: 0 0 30px rgba(84, 34, 176, 0.7), 0 0 60px rgba(255, 215, 0, 0.4); }
+	@keyframes button-glow {
+		0%, 100% {
+			box-shadow:
+				0 0 20px rgba(84, 34, 176, 0.4),
+				0 0 40px rgba(255, 215, 0, 0.15),
+				inset 0 2px 4px rgba(255, 255, 255, 0.2);
+		}
+		50% {
+			box-shadow:
+				0 0 35px rgba(84, 34, 176, 0.7),
+				0 0 70px rgba(255, 215, 0, 0.4),
+				0 0 100px rgba(255, 215, 0, 0.15),
+				inset 0 2px 4px rgba(255, 255, 255, 0.3);
+		}
 	}
 
-	@keyframes wobble {
-		0%, 100% { transform: rotate(-5deg); }
-		50% { transform: rotate(5deg); }
+	@keyframes text-pulse {
+		0%, 100% {
+			opacity: 0.7;
+			text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+		}
+		50% {
+			opacity: 1;
+			text-shadow:
+				0 0 10px rgba(255, 215, 0, 0.6),
+				0 0 20px rgba(255, 215, 0, 0.3),
+				0 2px 4px rgba(0, 0, 0, 0.3);
+		}
 	}
 </style>

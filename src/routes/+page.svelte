@@ -6,7 +6,7 @@
 	import ResultPanel from '$lib/components/ResultPanel.svelte';
 	import Timer from '$lib/components/Timer.svelte';
 	import { gameState, isSpinning, isLocked } from '$lib/stores/gameStore.js';
-	import { STORY_FORMS, PICK_OR_SPIN, getDuration } from '$lib/data/storyForms.js';
+	import { FORMAT_REEL, getDuration } from '$lib/data/storyForms.js';
 	import { getStories } from '$lib/data/stories.js';
 
 	let storyReel;
@@ -29,28 +29,11 @@
 	}
 
 	function buildFormReelItems() {
-		const forms = [...STORY_FORMS];
-		return forms.map(f => ({
+		return FORMAT_REEL.map(f => ({
 			label: f.label,
 			icon: f.icon,
 			form: f
 		}));
-	}
-
-	function shuffleWithVideoFirst(forms, spinCount) {
-		const shuffled = [...forms];
-		for (let i = shuffled.length - 1; i > 0; i--) {
-			const j = Math.floor(Math.random() * (i + 1));
-			[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-		}
-
-		if (spinCount < 3) {
-			const videoIdx = shuffled.findIndex(f => f.id === 'video');
-			if (videoIdx > 0) {
-				[shuffled[0], shuffled[videoIdx]] = [shuffled[videoIdx], shuffled[0]];
-			}
-		}
-		return shuffled;
 	}
 
 	function getNextStoryIndex(usedIndices, total) {
@@ -62,37 +45,11 @@
 		return available[Math.floor(Math.random() * available.length)];
 	}
 
-	function getNextForm(usedFormIds, spinCount) {
-		const available = STORY_FORMS.filter(f => !usedFormIds.includes(f.id));
-		const pool = available.length > 0 ? available : [...STORY_FORMS];
-		const videoUsed = usedFormIds.includes('video');
-
-		if (!videoUsed && spinCount < 3) {
-			const video = pool.find(f => f.id === 'video');
-			if (video) {
-				const chance = spinCount === 0 ? 0.5 : spinCount === 1 ? 0.66 : 1;
-				if (Math.random() < chance) return video;
-			}
-		}
-
-		const withPickOrSpin = Math.random() < 0.2 && spinCount > 0;
-		if (withPickOrSpin) return PICK_OR_SPIN;
-
-		return pool[Math.floor(Math.random() * pool.length)];
-	}
-
 	async function handleSpin() {
-		if ($isSpinning || ($isLocked && !$gameState.isPickOrSpin && !$gameState.isFreeChoice)) return;
+		if ($isSpinning || ($isLocked && !$gameState.isFreeChoice)) return;
 
 		const state = $gameState;
 		const storyIdx = getNextStoryIndex(state.usedStoryIndices, stories.length);
-		const form = getNextForm(state.usedFormIds, state.spinCount);
-		const isFreeChoice = form.id === 'free';
-		const isPickOrSpin = form.id === 'pick-or-spin';
-
-		const formIdx = isPickOrSpin
-			? Math.floor(Math.random() * formReelItems.length)
-			: formReelItems.findIndex(f => f.form.id === form.id);
 
 		gameState.update(s => ({ ...s, spinning: true }));
 
@@ -101,39 +58,37 @@
 			spinAudio.play().catch(() => {});
 		} catch {}
 
-		const targetFormIdx = formIdx >= 0 ? formIdx : 0;
+		// Story reel: targeted spin to a specific story
 		const storyPromise = storyReel?.spin(4700, storyIdx);
 		await new Promise(r => setTimeout(r, 300));
-		const formPromise = formReel?.spin(5000, targetFormIdx);
-
-		gameState.update(s => ({
-			...s,
-			currentStoryIndex: storyIdx,
-			currentFormIndex: formIdx >= 0 ? formIdx : 0
-		}));
+		// Format reel: natural spin — no target, lands wherever it stops
+		const formPromise = formReel?.spin(5000);
 
 		await storyPromise;
-		await formPromise;
+		const landedFormIdx = await formPromise;
 
 		if (spinAudio) {
 			spinAudio.onended = () => { spinAudio = null; };
 		}
 
+		const landedFormItem = formReelItems[landedFormIdx];
+		const form = landedFormItem?.form || FORMAT_REEL[0];
+		const isFreeChoice = form.id === 'free';
+
 		currentStory = stories[storyIdx];
-		currentForm = isPickOrSpin ? PICK_OR_SPIN : form;
-		timerDuration = isPickOrSpin ? 30 : getDuration(form.id);
+		currentForm = form;
+		timerDuration = getDuration(form.id);
 
 		gameState.update(s => ({
 			...s,
 			spinning: false,
-			locked: !(isPickOrSpin || isFreeChoice),
-			isPickOrSpin,
+			locked: !isFreeChoice,
 			isFreeChoice,
 			spinCount: s.spinCount + 1,
 			usedStoryIndices: [...s.usedStoryIndices, storyIdx],
-			usedFormIds: isPickOrSpin ? s.usedFormIds : [...s.usedFormIds, form.id],
+			usedFormIds: [...s.usedFormIds, form.id],
 			currentStoryIndex: storyIdx,
-			currentFormIndex: formIdx >= 0 ? formIdx : 0
+			currentFormIndex: landedFormIdx
 		}));
 	}
 
@@ -141,7 +96,6 @@
 		gameState.update(s => ({
 			...s,
 			locked: false,
-			isPickOrSpin: false,
 			isFreeChoice: false
 		}));
 		handleSpin();
@@ -163,7 +117,7 @@
 		if (state.currentStoryIndex !== null && state.currentFormIndex !== null) {
 			currentStory = stories[state.currentStoryIndex];
 			const formItem = formReelItems[state.currentFormIndex];
-			currentForm = state.isPickOrSpin ? PICK_OR_SPIN : formItem?.form || null;
+			currentForm = formItem?.form || null;
 			timerDuration = currentForm ? getDuration(currentForm.id) : 30;
 		}
 	});
@@ -197,7 +151,7 @@
 	<div class="spin-area">
 		<SpinButton
 			spinning={$isSpinning}
-			disabled={$isLocked && !$gameState.isPickOrSpin && !$gameState.isFreeChoice}
+			disabled={$isLocked && !$gameState.isFreeChoice}
 			onClick={handleSpin}
 		/>
 	</div>
@@ -205,12 +159,11 @@
 	<ResultPanel
 		story={currentStory}
 		form={currentForm}
-		isPickOrSpin={$gameState.isPickOrSpin}
 		isFreeChoice={$gameState.isFreeChoice}
 		onSpinAgain={handleSpinAgain}
 	/>
 
-	{#if currentForm && !$gameState.isPickOrSpin && ($isLocked || $gameState.isFreeChoice)}
+	{#if currentForm && ($isLocked || $gameState.isFreeChoice)}
 		<Timer durationMinutes={timerDuration} />
 	{/if}
 
