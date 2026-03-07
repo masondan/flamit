@@ -15,14 +15,14 @@
 	$: displayItems = items.length > 0 ? [...items, ...items, ...items] : [];
 	$: baseOffset = items.length * ITEM_HEIGHT;
 
-	export function spin(duration) {
+	export function spin(duration, targetIndex) {
 		return new Promise((resolve) => {
 			resolveStop = resolve;
 			const startTime = performance.now();
 			const totalDuration = duration || 5000;
 			offset = baseOffset;
-			const targetOffset = (selectedIndex !== null && selectedIndex !== undefined)
-				? baseOffset + selectedIndex * ITEM_HEIGHT
+			const targetOffset = (targetIndex !== null && targetIndex !== undefined)
+				? baseOffset + targetIndex * ITEM_HEIGHT
 				: null;
 
 			function frame(now) {
@@ -94,14 +94,16 @@
 					class:selected={!spinning && selectedIndex !== null && (i % items.length) === selectedIndex}
 					
 				>
-					<span class="reel-icon-wrap">
-						{#if item.icon && item.icon.startsWith('/')}
-							<img class="reel-icon-img" src={item.icon} alt="" />
-						{:else}
-							<span class="reel-icon-emoji">{item.icon || ''}</span>
-						{/if}
+					<span class="reel-item-inner">
+						<span class="reel-icon-wrap">
+							{#if item.icon && item.icon.startsWith('/')}
+								<img class="reel-icon-img" src={item.icon} alt="" />
+							{:else}
+								<span class="reel-icon-emoji">{item.icon || ''}</span>
+							{/if}
+						</span>
+						<span class="reel-text">{item.label}</span>
 					</span>
-					<span class="reel-text">{item.label}</span>
 				</div>
 			{/each}
 		</div>
@@ -167,12 +169,18 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		gap: var(--space-2);
 		color: var(--color-primary);
 		font-family: var(--font-family-saira);
 		font-weight: 500;
 		font-size: var(--font-size-xl);
 		flex-shrink: 0;
+	}
+
+	.reel-item-inner {
+		display: flex;
+		align-items: center;
+		gap: var(--space-2);
+		width: 130px;
 	}
 
 	.reel-item.selected {

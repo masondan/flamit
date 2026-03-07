@@ -101,9 +101,10 @@
 			spinAudio.play().catch(() => {});
 		} catch {}
 
-		const storyPromise = storyReel?.spin(4700);
+		const targetFormIdx = formIdx >= 0 ? formIdx : 0;
+		const storyPromise = storyReel?.spin(4700, storyIdx);
 		await new Promise(r => setTimeout(r, 300));
-		const formPromise = formReel?.spin(5000);
+		const formPromise = formReel?.spin(5000, targetFormIdx);
 
 		gameState.update(s => ({
 			...s,
