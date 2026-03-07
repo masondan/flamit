@@ -249,13 +249,13 @@
 	.reels-row {
 		display: flex;
 		gap: var(--space-3);
-		margin-top: var(--space-2);
+		margin-top: var(--space-6);
 	}
 
 	.spin-area {
 		display: flex;
 		justify-content: center;
-		padding: var(--space-4) 0;
+		padding: var(--space-6) 0;
 	}
 
 	.footer-actions {
