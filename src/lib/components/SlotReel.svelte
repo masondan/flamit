@@ -94,11 +94,13 @@
 					class:selected={!spinning && selectedIndex !== null && (i % items.length) === selectedIndex}
 					
 				>
-					{#if item.icon && item.icon.startsWith('/')}
-						<img class="reel-icon" src={item.icon} alt="" />
-					{:else}
-						<span class="reel-icon">{item.icon || ''}</span>
-					{/if}
+					<span class="reel-icon-wrap">
+						{#if item.icon && item.icon.startsWith('/')}
+							<img class="reel-icon-img" src={item.icon} alt="" />
+						{:else}
+							<span class="reel-icon-emoji">{item.icon || ''}</span>
+						{/if}
+					</span>
 					<span class="reel-text">{item.label}</span>
 				</div>
 			{/each}
@@ -178,18 +180,23 @@
 		font-weight: 600;
 	}
 
-	.reel-icon {
-		font-size: 1.4rem;
-		width: 1.6rem;
-		text-align: center;
+	.reel-icon-wrap {
+		width: 24px;
+		height: 24px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
 		flex-shrink: 0;
 	}
 
-	img.reel-icon {
-		width: 1.4rem;
-		height: 1.4rem;
-		display: block;
-		margin: 0 auto;
+	.reel-icon-emoji {
+		font-size: 1.2rem;
+		line-height: 1;
+	}
+
+	.reel-icon-img {
+		width: 20px;
+		height: 20px;
 		filter: brightness(0) saturate(100%) invert(14%) sepia(60%) saturate(5000%) hue-rotate(260deg) brightness(80%) contrast(100%);
 	}
 
