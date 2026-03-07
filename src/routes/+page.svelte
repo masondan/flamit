@@ -225,7 +225,7 @@
 		flex-direction: column;
 		gap: var(--space-4);
 		padding: var(--space-6);
-		padding-top: var(--space-4);
+		padding-top: var(--space-10);
 	}
 
 	.header {
@@ -233,8 +233,8 @@
 	}
 
 	.logo {
-		width: 35%;
-		max-width: 180px;
+		width: 31%;
+		max-width: 160px;
 		height: auto;
 		margin-bottom: var(--space-1);
 	}
