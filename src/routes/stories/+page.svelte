@@ -243,6 +243,7 @@
 				<img class="success-image" src="/logos/logo-media-cluster.png" alt="" />
 				<p class="success-heading">Thank you</p>
 				<p class="success-text">Your stories have been submitted</p>
+				<p class="success-text">You can now close this tab.</p>
 			</div>
 		{:else}
 			<div class="form-section">
