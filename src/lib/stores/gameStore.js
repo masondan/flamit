@@ -26,6 +26,7 @@ const defaults = {
 	usedStoryIndices: [],
 	usedFormIds: [],
 	isPickOrSpin: false,
+	isFreeChoice: false,
 	timerRunning: false,
 	timerSeconds: 0,
 	timerEndTime: null,

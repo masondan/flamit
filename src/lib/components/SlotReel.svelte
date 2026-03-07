@@ -88,7 +88,7 @@
 				<div
 					class="reel-item"
 					class:selected={!spinning && selectedIndex !== null && (i % items.length) === selectedIndex}
-					class:free-go={item.label === 'FREE GO'}
+					class:free-go={item.label === 'Free'}
 				>
 					{#if item.icon && item.icon.startsWith('/')}
 						<img class="reel-icon" src={item.icon} alt="" />
@@ -164,9 +164,8 @@
 		gap: var(--space-2);
 		color: var(--color-primary);
 		font-family: var(--font-family-saira);
-		font-stretch: 87.5%;
 		font-weight: 500;
-		font-size: var(--font-size-lg);
+		font-size: var(--font-size-xl);
 		flex-shrink: 0;
 	}
 
@@ -176,7 +175,6 @@
 	}
 
 	.reel-item.free-go {
-		font-stretch: 75%;
 		font-weight: 700;
 	}
 
@@ -191,7 +189,7 @@
 	}
 
 	.reel-text {
-		font-size: var(--font-size-base);
+		font-size: inherit;
 	}
 
 	.reel-fade {

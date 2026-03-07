@@ -65,10 +65,14 @@
 	function getNextForm(usedFormIds, spinCount) {
 		const available = STORY_FORMS.filter(f => !usedFormIds.includes(f.id));
 		const pool = available.length > 0 ? available : [...STORY_FORMS];
+		const videoUsed = usedFormIds.includes('video');
 
-		if (spinCount < 3) {
+		if (!videoUsed && spinCount < 3) {
 			const video = pool.find(f => f.id === 'video');
-			if (video) return video;
+			if (video) {
+				const chance = spinCount === 0 ? 0.5 : spinCount === 1 ? 0.66 : 1;
+				if (Math.random() < chance) return video;
+			}
 		}
 
 		const withPickOrSpin = Math.random() < 0.2 && spinCount > 0;
@@ -78,11 +82,12 @@
 	}
 
 	async function handleSpin() {
-		if ($isSpinning || ($isLocked && !$gameState.isPickOrSpin)) return;
+		if ($isSpinning || ($isLocked && !$gameState.isPickOrSpin && !$gameState.isFreeChoice)) return;
 
 		const state = $gameState;
 		const storyIdx = getNextStoryIndex(state.usedStoryIndices, stories.length);
 		const form = getNextForm(state.usedFormIds, state.spinCount);
+		const isFreeChoice = form.id === 'free';
 		const isPickOrSpin = form.id === 'pick-or-spin';
 
 		const formIdx = isPickOrSpin
@@ -116,8 +121,9 @@
 		gameState.update(s => ({
 			...s,
 			spinning: false,
-			locked: !isPickOrSpin,
+			locked: !(isPickOrSpin || isFreeChoice),
 			isPickOrSpin,
+			isFreeChoice,
 			spinCount: s.spinCount + 1,
 			usedStoryIndices: [...s.usedStoryIndices, storyIdx],
 			usedFormIds: isPickOrSpin ? s.usedFormIds : [...s.usedFormIds, form.id],
@@ -130,7 +136,8 @@
 		gameState.update(s => ({
 			...s,
 			locked: false,
-			isPickOrSpin: false
+			isPickOrSpin: false,
+			isFreeChoice: false
 		}));
 		handleSpin();
 	}
@@ -185,7 +192,7 @@
 	<div class="spin-area">
 		<SpinButton
 			spinning={$isSpinning}
-			disabled={$isLocked && !$gameState.isPickOrSpin}
+			disabled={$isLocked && !$gameState.isPickOrSpin && !$gameState.isFreeChoice}
 			onClick={handleSpin}
 		/>
 	</div>
@@ -194,10 +201,11 @@
 		story={currentStory}
 		form={currentForm}
 		isPickOrSpin={$gameState.isPickOrSpin}
+		isFreeChoice={$gameState.isFreeChoice}
 		onSpinAgain={handleSpinAgain}
 	/>
 
-	{#if currentForm && !$gameState.isPickOrSpin && $isLocked}
+	{#if currentForm && !$gameState.isPickOrSpin && ($isLocked || $gameState.isFreeChoice)}
 		<Timer durationMinutes={timerDuration} />
 	{/if}
 
@@ -225,8 +233,8 @@
 	}
 
 	.logo {
-		width: 50%;
-		max-width: 240px;
+		width: 35%;
+		max-width: 180px;
 		height: auto;
 		margin-bottom: var(--space-1);
 	}

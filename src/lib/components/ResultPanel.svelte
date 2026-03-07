@@ -2,6 +2,7 @@
 	export let story = null;
 	export let form = null;
 	export let isPickOrSpin = false;
+	export let isFreeChoice = false;
 	export let onSpinAgain = null;
 </script>
 
@@ -19,6 +20,15 @@
 			<button class="spin-again-btn" on:click={onSpinAgain}>
 				🔄 Spin Again
 			</button>
+		{:else if isFreeChoice}
+			<p class="result-instruction">
+				Create a story in <strong>any format</strong> based on the story below OR spin again. Your choice!
+			</p>
+			<div class="story-link">
+				<a href={story.url} target="_blank" rel="noopener noreferrer">
+					{story.headline}
+				</a>
+			</div>
 		{:else}
 			<p class="result-instruction">
 				Create a <strong class="form-highlight">{form.label}</strong> story based on:
@@ -35,7 +45,7 @@
 <style>
 	.result-panel {
 		background: var(--color-primary-light);
-		border: 2px solid #ffffff;
+		border: 2px solid var(--color-accent);
 		border-radius: var(--radius-lg);
 		padding: var(--space-4);
 		text-align: center;

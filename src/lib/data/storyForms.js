@@ -4,7 +4,7 @@ export const STORY_FORMS = [
 	{ id: 'text', label: 'Text', icon: '/icons/icon-text.svg', duration: 30 },
 	{ id: 'data', label: 'Data', icon: '/icons/icon-data.svg', duration: 30 },
 	{ id: 'social', label: 'Social', icon: '/icons/icon-social.svg', duration: 30 },
-	{ id: 'free', label: 'FREE GO', icon: '/icons/icon-free-go.svg', duration: 30 }
+	{ id: 'free', label: 'Free', icon: '/icons/icon-free-go.svg', duration: 30 }
 ];
 
 export const PICK_OR_SPIN = { id: 'pick-or-spin', label: 'Pick or Spin', icon: '🔄', duration: null };
