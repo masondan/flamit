@@ -1,19 +1,19 @@
-export const DEFAULT_STORIES = [
+const API_BASE = '/api';
+
+const DEFAULT_STORIES = [
 	{
 		id: 1,
 		headline: 'Sample Story 1',
 		url: 'https://example.com/story-1',
-		submittedBy: 'Demo'
+		submitted_by: 'Demo'
 	},
 	{
 		id: 2,
 		headline: 'Sample Story 2',
 		url: 'https://example.com/story-2',
-		submittedBy: 'Demo'
+		submitted_by: 'Demo'
 	}
 ];
-
-const STORAGE_KEY = 'flamit_stories';
 
 function shuffle(arr) {
 	const shuffled = [...arr];
@@ -24,33 +24,70 @@ function shuffle(arr) {
 	return shuffled;
 }
 
-export function getStories() {
-	if (typeof window === 'undefined') return shuffle(DEFAULT_STORIES);
-	const stored = localStorage.getItem(STORAGE_KEY);
-	if (stored) {
-		try {
-			return shuffle(JSON.parse(stored));
-		} catch {
-			return shuffle(DEFAULT_STORIES);
-		}
+export async function fetchStories() {
+	try {
+		const res = await fetch(`${API_BASE}/stories`);
+		if (!res.ok) throw new Error();
+		const stories = await res.json();
+		return stories.length > 0 ? shuffle(stories) : shuffle(DEFAULT_STORIES);
+	} catch {
+		return shuffle(DEFAULT_STORIES);
 	}
-	return shuffle(DEFAULT_STORIES);
 }
 
-export function getStoriesOrdered() {
-	if (typeof window === 'undefined') return DEFAULT_STORIES;
-	const stored = localStorage.getItem(STORAGE_KEY);
-	if (stored) {
-		try {
-			return JSON.parse(stored);
-		} catch {
-			return DEFAULT_STORIES;
-		}
+export async function fetchStoriesOrdered() {
+	try {
+		const res = await fetch(`${API_BASE}/stories`);
+		if (!res.ok) throw new Error();
+		const stories = await res.json();
+		return stories.length > 0 ? stories : DEFAULT_STORIES;
+	} catch {
+		return DEFAULT_STORIES;
 	}
-	return DEFAULT_STORIES;
 }
 
-export function saveStories(stories) {
-	if (typeof window === 'undefined') return;
-	localStorage.setItem(STORAGE_KEY, JSON.stringify(stories));
+export async function fetchSubmissions() {
+	const res = await fetch(`${API_BASE}/submissions`);
+	if (!res.ok) throw new Error('Failed to fetch submissions');
+	return await res.json();
+}
+
+export async function submitStories(name, entries) {
+	const res = await fetch(`${API_BASE}/submissions`, {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({ name, entries })
+	});
+	if (!res.ok) throw new Error('Failed to submit');
+	return await res.json();
+}
+
+export async function approveSubmissions(submissions) {
+	const res = await fetch(`${API_BASE}/stories`, {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({ submissions })
+	});
+	if (!res.ok) throw new Error('Failed to approve');
+	return await res.json();
+}
+
+export async function deleteSubmissions(ids) {
+	const res = await fetch(`${API_BASE}/submissions`, {
+		method: 'DELETE',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify(ids ? { ids } : { all: true })
+	});
+	if (!res.ok) throw new Error('Failed to delete');
+	return await res.json();
+}
+
+export async function deleteStories(ids) {
+	const res = await fetch(`${API_BASE}/stories`, {
+		method: 'DELETE',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify(ids ? { ids } : { all: true })
+	});
+	if (!res.ok) throw new Error('Failed to delete');
+	return await res.json();
 }

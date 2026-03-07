@@ -7,7 +7,7 @@
 	import Timer from '$lib/components/Timer.svelte';
 	import { gameState, isSpinning, isLocked } from '$lib/stores/gameStore.js';
 	import { FORMAT_REEL, getDuration } from '$lib/data/storyForms.js';
-	import { getStories } from '$lib/data/stories.js';
+	import { fetchStories } from '$lib/data/stories.js';
 
 	let storyReel;
 	let formReel;
@@ -118,8 +118,8 @@
 		localStorage.removeItem('flamit_timer');
 	}
 
-	onMount(() => {
-		stories = getStories();
+	onMount(async () => {
+		stories = await fetchStories();
 		storyReelItems = buildStoryReelItems(stories);
 		formReelItems = buildFormReelItems();
 

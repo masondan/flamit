@@ -1,0 +1,7 @@
+name = "flamit"
+compatibility_date = "2024-01-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "flamit-db"
+database_id = "c7fc3421-6358-45db-af0f-e6a579457e2e"

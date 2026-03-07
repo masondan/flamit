@@ -1,6 +1,13 @@
 <script>
 	import { onMount } from 'svelte';
-	import { getStoriesOrdered, saveStories } from '$lib/data/stories.js';
+	import {
+		fetchStoriesOrdered,
+		fetchSubmissions,
+		submitStories,
+		approveSubmissions,
+		deleteSubmissions,
+		deleteStories
+	} from '$lib/data/stories.js';
 
 	let isAdmin = false;
 	let submissions = [];
@@ -10,27 +17,13 @@
 	let entries = [{ headline: '', url: '' }];
 	let submitted = false;
 	let errorMsg = '';
+	let submitting = false;
 
 	// Admin: story management
 	let dangerOpen = false;
 	let selectedStoryIds = [];
 	let showDeleteModal = false;
 	let showResetModal = false;
-
-	const SUBMISSIONS_KEY = 'flamit_submissions';
-
-	function loadSubmissions() {
-		try {
-			const stored = localStorage.getItem(SUBMISSIONS_KEY);
-			return stored ? JSON.parse(stored) : [];
-		} catch {
-			return [];
-		}
-	}
-
-	function saveSubmissions(subs) {
-		localStorage.setItem(SUBMISSIONS_KEY, JSON.stringify(subs));
-	}
 
 	function addEntry() {
 		if (entries.length < 3) {
@@ -42,7 +35,7 @@
 		entries = entries.filter((_, i) => i !== index);
 	}
 
-	function handleSubmit() {
+	async function handleSubmit() {
 		errorMsg = '';
 
 		if (!name.trim()) {
@@ -56,59 +49,46 @@
 			return;
 		}
 
-		const newSubmissions = validEntries.map((e, i) => ({
-			id: Date.now() + i,
-			name: name.trim(),
-			headline: e.headline.trim(),
-			url: e.url.trim(),
-			approved: false,
-			submittedAt: new Date().toISOString()
-		}));
-
-		const allSubs = [...loadSubmissions(), ...newSubmissions];
-		saveSubmissions(allSubs);
-
-		submitted = true;
+		submitting = true;
+		try {
+			await submitStories(name.trim(), validEntries);
+			submitted = true;
+		} catch {
+			errorMsg = 'Failed to submit. Please try again.';
+		}
+		submitting = false;
 	}
 
 	function toggleApproval(id) {
 		submissions = submissions.map(s =>
 			s.id === id ? { ...s, approved: !s.approved } : s
 		);
-		saveSubmissions(submissions);
 	}
 
-	function addToFlamIt() {
+	async function addToFlamIt() {
 		const selected = submissions.filter(s => s.approved);
 		if (selected.length === 0) return;
 
-		const newStories = selected.map((s, i) => ({
-			id: Date.now() + i,
-			headline: s.headline,
-			url: s.url,
-			submittedBy: s.name
-		}));
-
-		const existing = getStoriesOrdered();
-		const isDefault = existing.length <= 2 && existing[0]?.submittedBy === 'Demo';
-		const merged = isDefault ? newStories : [...existing, ...newStories];
-
-		saveStories(merged);
-
-		submissions = submissions.filter(s => !s.approved);
-		saveSubmissions(submissions);
-
-		approvedStories = getStoriesOrdered();
-	}
-
-	function clearAll() {
-		if (confirm('Clear all submissions?')) {
-			submissions = [];
-			saveSubmissions([]);
+		try {
+			await approveSubmissions(selected);
+			submissions = submissions.filter(s => !s.approved);
+			approvedStories = await fetchStoriesOrdered();
+		} catch {
+			alert('Failed to approve stories.');
 		}
 	}
 
-	// Story management
+	async function clearAll() {
+		if (confirm('Clear all submissions?')) {
+			try {
+				await deleteSubmissions();
+				submissions = [];
+			} catch {
+				alert('Failed to clear submissions.');
+			}
+		}
+	}
+
 	function toggleStorySelect(id) {
 		if (selectedStoryIds.includes(id)) {
 			selectedStoryIds = selectedStoryIds.filter(sid => sid !== id);
@@ -118,8 +98,7 @@
 	}
 
 	function downloadAll() {
-		const stories = getStoriesOrdered();
-		const blob = new Blob([JSON.stringify(stories, null, 2)], { type: 'application/json' });
+		const blob = new Blob([JSON.stringify(approvedStories, null, 2)], { type: 'application/json' });
 		const url = URL.createObjectURL(blob);
 		const a = document.createElement('a');
 		a.href = url;
@@ -128,54 +107,35 @@
 		URL.revokeObjectURL(url);
 	}
 
-	function importStories() {
-		const input = document.createElement('input');
-		input.type = 'file';
-		input.accept = '.json';
-		input.onchange = (e) => {
-			const file = e.target.files[0];
-			if (!file) return;
-			const reader = new FileReader();
-			reader.onload = (ev) => {
-				try {
-					const imported = JSON.parse(ev.target.result);
-					if (Array.isArray(imported)) {
-						saveStories(imported);
-						approvedStories = getStoriesOrdered();
-					}
-				} catch {
-					alert('Invalid JSON file.');
-				}
-			};
-			reader.readAsText(file);
-		};
-		input.click();
+	async function deleteSelected() {
+		try {
+			await deleteStories(selectedStoryIds);
+			approvedStories = await fetchStoriesOrdered();
+			selectedStoryIds = [];
+			showDeleteModal = false;
+		} catch {
+			alert('Failed to delete stories.');
+		}
 	}
 
-	function deleteSelected() {
-		const stories = getStoriesOrdered().filter(s => !selectedStoryIds.includes(s.id));
-		saveStories(stories);
-		approvedStories = getStoriesOrdered();
-		selectedStoryIds = [];
-		showDeleteModal = false;
+	async function resetFlamIt() {
+		try {
+			await deleteStories();
+			approvedStories = [];
+			selectedStoryIds = [];
+			showResetModal = false;
+		} catch {
+			alert('Failed to reset.');
+		}
 	}
 
-	function resetFlamIt() {
-		saveStories([]);
-		approvedStories = [];
-		selectedStoryIds = [];
-		showResetModal = false;
-		localStorage.removeItem('flamit_game_state');
-		localStorage.removeItem('flamit_timer');
-	}
-
-	onMount(() => {
+	onMount(async () => {
 		const params = new URLSearchParams(window.location.search);
 		isAdmin = params.has('admin');
 
 		if (isAdmin) {
-			submissions = loadSubmissions();
-			approvedStories = getStoriesOrdered();
+			submissions = await fetchSubmissions();
+			approvedStories = await fetchStoriesOrdered();
 		}
 	});
 </script>
@@ -247,9 +207,6 @@
 				<div class="story-actions">
 					<button class="btn-outline" on:click={downloadAll}>
 						Download All
-					</button>
-					<button class="btn-outline" on:click={importStories}>
-						Import
 					</button>
 				</div>
 
@@ -333,8 +290,8 @@
 					<p class="error-msg">{errorMsg}</p>
 				{/if}
 
-				<button class="btn-primary submit-btn" on:click={handleSubmit}>
-					Submit Stories
+				<button class="btn-primary submit-btn" on:click={handleSubmit} disabled={submitting}>
+					{submitting ? 'Submitting...' : 'Submit Stories'}
 				</button>
 			</div>
 		{/if}
