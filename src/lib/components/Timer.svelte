@@ -7,6 +7,7 @@
 	let interval;
 	let remainingSeconds = 0;
 	let running = false;
+	let alarmAudio = null;
 
 	const TIMER_KEY = 'flamit_timer';
 
@@ -70,6 +71,7 @@
 	}
 
 	function toggleTimer() {
+		stopAlarm();
 		if (remainingSeconds <= 0) {
 			remainingSeconds = durationMinutes * 60;
 			running = false;
@@ -88,10 +90,20 @@
 	}
 
 	function playAlarm() {
+		stopAlarm();
 		try {
-			const audio = new Audio('/sounds/alarm.mp3');
-			audio.play().catch(() => {});
+			alarmAudio = new Audio('/sounds/alarm.mp3');
+			alarmAudio.loop = true;
+			alarmAudio.play().catch(() => {});
 		} catch {}
+	}
+
+	function stopAlarm() {
+		if (alarmAudio) {
+			alarmAudio.pause();
+			alarmAudio.currentTime = 0;
+			alarmAudio = null;
+		}
 	}
 
 	function playDing() {
@@ -114,6 +126,7 @@
 
 	onDestroy(() => {
 		clearInterval(interval);
+		stopAlarm();
 	});
 </script>
 

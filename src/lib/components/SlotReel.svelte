@@ -31,14 +31,15 @@
 					return;
 				}
 
-				// Speed curve: fast for first 40%, then decelerate
+				// Speed curve: fast for first 35%, then decelerate noticeably
 				let speed;
-				if (progress < 0.4) {
-					speed = 25 + Math.random() * 5;
+				const MAX_SPEED = 12;
+				if (progress < 0.35) {
+					speed = MAX_SPEED + Math.random() * 3;
 				} else {
-					const decelProgress = (progress - 0.4) / 0.6;
-					const ease = 1 - decelProgress * decelProgress;
-					speed = Math.max(1, 25 * ease);
+					const decelProgress = (progress - 0.35) / 0.65;
+					const ease = 1 - decelProgress * decelProgress * decelProgress;
+					speed = Math.max(0.5, MAX_SPEED * ease);
 				}
 
 				offset += speed;
@@ -88,7 +89,7 @@
 				<div
 					class="reel-item"
 					class:selected={!spinning && selectedIndex !== null && (i % items.length) === selectedIndex}
-					class:free-go={item.label === 'Free'}
+					
 				>
 					{#if item.icon && item.icon.startsWith('/')}
 						<img class="reel-icon" src={item.icon} alt="" />
@@ -172,10 +173,6 @@
 	.reel-item.selected {
 		color: var(--color-primary);
 		font-weight: 600;
-	}
-
-	.reel-item.free-go {
-		font-weight: 700;
 	}
 
 	.reel-icon {

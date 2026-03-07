@@ -114,6 +114,12 @@
 		await storyPromise;
 		await formPromise;
 
+		if (spinAudio) {
+			spinAudio.pause();
+			spinAudio.currentTime = 0;
+			spinAudio = null;
+		}
+
 		currentStory = stories[storyIdx];
 		currentForm = isPickOrSpin ? PICK_OR_SPIN : form;
 		timerDuration = isPickOrSpin ? 30 : getDuration(form.id);
