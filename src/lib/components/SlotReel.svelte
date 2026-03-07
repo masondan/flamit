@@ -21,28 +21,41 @@
 			const startTime = performance.now();
 			const totalDuration = duration || 5000;
 			offset = baseOffset;
+			const targetOffset = (selectedIndex !== null && selectedIndex !== undefined)
+				? baseOffset + selectedIndex * ITEM_HEIGHT
+				: null;
 
 			function frame(now) {
 				const elapsed = now - startTime;
 				const progress = Math.min(elapsed / totalDuration, 1);
 
 				if (progress >= 1) {
-					snapToSelected();
+					if (targetOffset !== null) offset = targetOffset;
+					if (resolveStop) resolveStop();
 					return;
 				}
 
 				// Speed curve: fast for first 30%, then decelerate noticeably
-				let speed;
-				const MAX_SPEED = 8;
+				const MAX_SPEED = 7;
 				if (progress < 0.3) {
-					speed = MAX_SPEED + Math.random() * 2;
-				} else {
-					const decelProgress = (progress - 0.3) / 0.7;
+					offset += MAX_SPEED + Math.random() * 2;
+				} else if (progress < 0.85) {
+					const decelProgress = (progress - 0.3) / 0.55;
 					const ease = 1 - decelProgress * decelProgress * decelProgress * decelProgress;
-					speed = Math.max(0.3, MAX_SPEED * ease);
+					offset += Math.max(0.5, MAX_SPEED * ease);
+				} else if (targetOffset !== null) {
+					// Final 15%: glide smoothly toward the target
+					const glideProgress = (progress - 0.85) / 0.15;
+					const currentMod = offset % (items.length * ITEM_HEIGHT);
+					const targetMod = targetOffset % (items.length * ITEM_HEIGHT);
+					let diff = targetMod - currentMod;
+					if (diff < 0) diff += items.length * ITEM_HEIGHT;
+					if (diff > items.length * ITEM_HEIGHT / 2) diff -= items.length * ITEM_HEIGHT;
+					const step = diff * 0.08 * (1 - glideProgress) + diff * 0.15 * glideProgress;
+					offset += Math.max(0.2, Math.abs(step)) * Math.sign(step || 1);
+				} else {
+					offset += 0.3;
 				}
-
-				offset += speed;
 
 				if (offset >= baseOffset + items.length * ITEM_HEIGHT) {
 					offset -= items.length * ITEM_HEIGHT;
@@ -53,16 +66,6 @@
 
 			animationFrame = requestAnimationFrame(frame);
 		});
-	}
-
-	function snapToSelected() {
-		if (selectedIndex === null || selectedIndex === undefined) {
-			if (resolveStop) resolveStop();
-			return;
-		}
-		const targetOffset = baseOffset + selectedIndex * ITEM_HEIGHT;
-		offset = targetOffset;
-		if (resolveStop) resolveStop();
 	}
 
 	onMount(() => {
@@ -177,11 +180,16 @@
 
 	.reel-icon {
 		font-size: 1.4rem;
+		width: 1.6rem;
+		text-align: center;
+		flex-shrink: 0;
 	}
 
 	img.reel-icon {
 		width: 1.4rem;
 		height: 1.4rem;
+		display: block;
+		margin: 0 auto;
 		filter: brightness(0) saturate(100%) invert(14%) sepia(60%) saturate(5000%) hue-rotate(260deg) brightness(80%) contrast(100%);
 	}
 
