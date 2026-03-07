@@ -43,7 +43,12 @@
 			return;
 		}
 
-		const validEntries = entries.filter(e => e.headline.trim() && e.url.trim());
+		const validEntries = entries
+			.filter(e => e.headline.trim() && e.url.trim())
+			.map(e => ({
+				headline: e.headline.trim(),
+				url: e.url.trim().match(/^https?:\/\//) ? e.url.trim() : `https://${e.url.trim()}`
+			}));
 		if (validEntries.length === 0) {
 			errorMsg = 'Please add at least one story with headline and URL.';
 			return;
