@@ -9,7 +9,6 @@
 	let reelEl;
 	let offset = 0;
 	let animationFrame;
-	let speed = 0;
 	let resolveStop;
 	const ITEM_HEIGHT = 64;
 
@@ -19,47 +18,40 @@
 	export function spin(duration) {
 		return new Promise((resolve) => {
 			resolveStop = resolve;
-			speed = 25 + Math.random() * 10;
+			const startTime = performance.now();
+			const totalDuration = duration || 5000;
 			offset = baseOffset;
-			tick(duration);
-		});
-	}
 
-	function tick(remainingMs) {
-		if (remainingMs <= 0) {
-			snapToSelected();
-			return;
-		}
+			function frame(now) {
+				const elapsed = now - startTime;
+				const progress = Math.min(elapsed / totalDuration, 1);
 
-		const startTime = performance.now();
+				if (progress >= 1) {
+					snapToSelected();
+					return;
+				}
 
-		function frame(now) {
-			const elapsed = now - startTime;
-			if (elapsed >= 16) {
+				// Speed curve: fast for first 40%, then decelerate
+				let speed;
+				if (progress < 0.4) {
+					speed = 25 + Math.random() * 5;
+				} else {
+					const decelProgress = (progress - 0.4) / 0.6;
+					const ease = 1 - decelProgress * decelProgress;
+					speed = Math.max(1, 25 * ease);
+				}
+
 				offset += speed;
 
 				if (offset >= baseOffset + items.length * ITEM_HEIGHT) {
 					offset -= items.length * ITEM_HEIGHT;
 				}
 
-				const remaining = remainingMs - elapsed;
-				const progress = 1 - (remaining / (remaining + 500));
-				if (remaining < 800) {
-					speed = Math.max(2, speed * 0.96);
-				}
-
-				if (remaining <= 0) {
-					snapToSelected();
-					return;
-				}
-
-				tick(remaining - elapsed);
-				return;
+				animationFrame = requestAnimationFrame(frame);
 			}
-			animationFrame = requestAnimationFrame(frame);
-		}
 
-		animationFrame = requestAnimationFrame(frame);
+			animationFrame = requestAnimationFrame(frame);
+		});
 	}
 
 	function snapToSelected() {
@@ -69,7 +61,6 @@
 		}
 		const targetOffset = baseOffset + selectedIndex * ITEM_HEIGHT;
 		offset = targetOffset;
-		speed = 0;
 		if (resolveStop) resolveStop();
 	}
 
@@ -97,8 +88,13 @@
 				<div
 					class="reel-item"
 					class:selected={!spinning && selectedIndex !== null && (i % items.length) === selectedIndex}
+					class:free-go={item.label === 'FREE GO'}
 				>
-					<span class="reel-icon">{item.icon || ''}</span>
+					{#if item.icon && item.icon.startsWith('/')}
+						<img class="reel-icon" src={item.icon} alt="" />
+					{:else}
+						<span class="reel-icon">{item.icon || ''}</span>
+					{/if}
 					<span class="reel-text">{item.label}</span>
 				</div>
 			{/each}
@@ -119,7 +115,7 @@
 	.reel-label {
 		font-size: var(--font-size-xs);
 		font-weight: var(--font-weight-semibold);
-		color: var(--color-text-muted);
+		color: #ffffff;
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
 		margin-bottom: var(--space-2);
@@ -130,10 +126,10 @@
 		height: 192px;
 		overflow: hidden;
 		position: relative;
-		background: linear-gradient(135deg, #1a0a30 0%, #2d1560 50%, #1a0a30 100%);
+		background: #ffffff;
 		border-radius: var(--radius-lg);
 		border: 2px solid var(--color-accent);
-		box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.4), 0 0 12px rgba(255, 215, 0, 0.2);
+		box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.1), 0 0 12px rgba(255, 215, 0, 0.2);
 	}
 
 	.reel-highlight {
@@ -145,7 +141,7 @@
 		transform: translateY(-50%);
 		border-top: 2px solid var(--color-accent);
 		border-bottom: 2px solid var(--color-accent);
-		background: rgba(84, 34, 176, 0.15);
+		background: rgba(84, 34, 176, 0.08);
 		z-index: 2;
 		pointer-events: none;
 	}
@@ -166,19 +162,32 @@
 		align-items: center;
 		justify-content: center;
 		gap: var(--space-2);
-		color: rgba(255, 255, 255, 0.7);
+		color: var(--color-primary);
+		font-family: var(--font-family-saira);
+		font-stretch: 87.5%;
+		font-weight: 500;
 		font-size: var(--font-size-lg);
-		font-weight: var(--font-weight-semibold);
 		flex-shrink: 0;
 	}
 
 	.reel-item.selected {
-		color: #ffffff;
-		text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+		color: var(--color-primary);
+		font-weight: 600;
+	}
+
+	.reel-item.free-go {
+		font-stretch: 75%;
+		font-weight: 700;
 	}
 
 	.reel-icon {
 		font-size: 1.4rem;
+	}
+
+	img.reel-icon {
+		width: 1.4rem;
+		height: 1.4rem;
+		filter: brightness(0) saturate(100%) invert(14%) sepia(60%) saturate(5000%) hue-rotate(260deg) brightness(80%) contrast(100%);
 	}
 
 	.reel-text {
@@ -196,11 +205,11 @@
 
 	.reel-fade-top {
 		top: 0;
-		background: linear-gradient(to bottom, #1a0a30 0%, transparent 100%);
+		background: linear-gradient(to bottom, var(--color-primary-light) 0%, transparent 100%);
 	}
 
 	.reel-fade-bottom {
 		bottom: 0;
-		background: linear-gradient(to top, #1a0a30 0%, transparent 100%);
+		background: linear-gradient(to top, var(--color-primary-light) 0%, transparent 100%);
 	}
 </style>

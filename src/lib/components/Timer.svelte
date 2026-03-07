@@ -78,6 +78,7 @@
 		}
 
 		running = !running;
+		playDing();
 		if (running) {
 			startInterval();
 		} else {
@@ -89,6 +90,13 @@
 	function playAlarm() {
 		try {
 			const audio = new Audio('/sounds/alarm.mp3');
+			audio.play().catch(() => {});
+		} catch {}
+	}
+
+	function playDing() {
+		try {
+			const audio = new Audio('/sounds/timer.mp3');
 			audio.play().catch(() => {});
 		} catch {}
 	}
@@ -109,51 +117,57 @@
 	});
 </script>
 
-<div class="timer-container">
+<div class="timer-section">
 	<div class="timer-header">Deadline</div>
 	<p class="timer-info">
 		You have <strong>{durationMinutes} minutes</strong> to complete this story.
-		{#if !running && remainingSeconds > 0}
-			Start the countdown now.
-		{/if}
 	</p>
-	<div class="timer-row">
-		<button class="timer-btn" on:click={toggleTimer}>
-			{#if finished}
-				Reset
-			{:else if running}
-				Stop
-			{:else}
-				Start
-			{/if}
-		</button>
-		<div class="timer-display" class:urgent class:finished>
-			{display}
+	<div class="timer-panel">
+		<div class="timer-row">
+			<button class="timer-btn" on:click={toggleTimer}>
+				{#if finished}
+					Reset
+				{:else if running}
+					Stop
+				{:else}
+					Start
+				{/if}
+			</button>
+			<div class="timer-display" class:urgent class:finished>
+				{display}
+			</div>
 		</div>
 	</div>
 </div>
 
 <style>
-	.timer-container {
-		background: var(--color-surface);
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius-lg);
-		padding: var(--space-4);
+	.timer-section {
 		text-align: center;
 	}
 
 	.timer-header {
 		font-size: var(--font-size-lg);
 		font-weight: var(--font-weight-bold);
-		color: var(--color-text-primary);
+		color: #ffffff;
 		margin-bottom: var(--space-2);
 	}
 
 	.timer-info {
 		font-size: var(--font-size-sm);
-		color: var(--color-text-secondary);
+		color: #ffffff;
 		margin-bottom: var(--space-3);
 		line-height: var(--line-height-normal);
+	}
+
+	.timer-info strong {
+		color: #ffffff;
+	}
+
+	.timer-panel {
+		background: #ffffff;
+		border: 2px solid var(--color-accent);
+		border-radius: var(--radius-lg);
+		padding: var(--space-4);
 	}
 
 	.timer-row {
@@ -185,7 +199,7 @@
 		font-size: 2rem;
 		font-weight: var(--font-weight-bold);
 		font-variant-numeric: tabular-nums;
-		color: var(--color-text-primary);
+		color: var(--color-primary);
 		min-width: 100px;
 	}
 

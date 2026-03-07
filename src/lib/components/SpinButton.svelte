@@ -13,7 +13,7 @@
 	{#if spinning}
 		<span class="spin-icon">🎰</span>
 	{:else}
-		<span class="spin-label">SPIN!</span>
+		<span class="spin-label">SPIN</span>
 	{/if}
 </button>
 
@@ -75,6 +75,9 @@
 	}
 
 	.spin-label {
+		font-family: var(--font-family-saira);
+		font-stretch: 75%;
+		font-weight: 700;
 		text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 	}
 

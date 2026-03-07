@@ -18,10 +18,12 @@
 	let currentForm = null;
 	let timerDuration = 30;
 
+	let spinAudio = null;
+
 	function buildStoryReelItems(storyList) {
 		return storyList.map((s, i) => ({
 			label: `Story ${i + 1}`,
-			icon: '📰',
+			icon: '/logos/icon-story-spinner.svg',
 			story: s
 		}));
 	}
@@ -89,9 +91,14 @@
 
 		gameState.update(s => ({ ...s, spinning: true }));
 
-		const storyPromise = storyReel?.spin(1800 + Math.random() * 400);
+		try {
+			spinAudio = new Audio('/sounds/wheel-of-fortune.mp3');
+			spinAudio.play().catch(() => {});
+		} catch {}
+
+		const storyPromise = storyReel?.spin(4700);
 		await new Promise(r => setTimeout(r, 300));
-		const formPromise = formReel?.spin(2200 + Math.random() * 400);
+		const formPromise = formReel?.spin(5000);
 
 		gameState.update(s => ({
 			...s,
@@ -154,7 +161,7 @@
 
 <div class="content">
 	<header class="header">
-		<h1 class="title">🎰 FlamIt</h1>
+		<img class="logo" src="/logos/logo-flamit-logotype.png" alt="FlamIt" />
 		<p class="subtitle">Spin to create</p>
 	</header>
 
@@ -217,16 +224,16 @@
 		text-align: center;
 	}
 
-	.title {
-		font-size: var(--font-size-2xl);
-		font-weight: var(--font-weight-bold);
-		color: var(--color-primary);
+	.logo {
+		width: 50%;
+		max-width: 240px;
+		height: auto;
 		margin-bottom: var(--space-1);
 	}
 
 	.subtitle {
 		font-size: var(--font-size-sm);
-		color: var(--color-text-muted);
+		color: rgba(255, 255, 255, 0.8);
 		text-transform: uppercase;
 		letter-spacing: 0.1em;
 	}
@@ -251,7 +258,7 @@
 
 	.reset-btn {
 		font-size: var(--font-size-xs);
-		color: var(--color-text-muted);
+		color: rgba(255, 255, 255, 0.6);
 		text-decoration: underline;
 		text-underline-offset: 2px;
 		background: none;
@@ -262,6 +269,6 @@
 	}
 
 	.reset-btn:hover {
-		color: var(--color-text-secondary);
+		color: #ffffff;
 	}
 </style>

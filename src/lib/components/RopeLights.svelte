@@ -37,7 +37,7 @@
 			#5422b0 90%,
 			#FFD700 100%
 		);
-		animation: chase 4s linear infinite;
+		animation: chase 10s linear infinite;
 		opacity: 0.6;
 	}
 
@@ -50,7 +50,7 @@
 		content: '';
 		position: absolute;
 		inset: 3px;
-		background: var(--color-surface);
+		background: var(--color-primary);
 		border-radius: inherit;
 	}
 

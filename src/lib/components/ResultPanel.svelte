@@ -35,7 +35,7 @@
 <style>
 	.result-panel {
 		background: var(--color-primary-light);
-		border: 1px solid var(--color-primary);
+		border: 2px solid #ffffff;
 		border-radius: var(--radius-lg);
 		padding: var(--space-4);
 		text-align: center;

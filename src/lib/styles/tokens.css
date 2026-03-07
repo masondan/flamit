@@ -9,6 +9,15 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: 'Saira';
+  src: url('/fonts/Saira-VariableFont_wdth,wght.ttf') format('truetype');
+  font-weight: 100 900;
+  font-stretch: 50% 125%;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   /* Colors - UI */
   --color-primary: #5422b0;
@@ -40,6 +49,9 @@
   --line-height-tight: 1.2;
   --line-height-normal: 1.5;
   --line-height-relaxed: 1.75;
+  --font-family-saira: 'Saira', sans-serif;
+  --font-family-saira-semi-condensed: 'Saira', sans-serif; /* Use font-stretch: 87.5% for semi-condensed */
+  --font-family-saira-condensed: 'Saira', sans-serif; /* Use font-stretch: 75% for condensed */
 
   /* Spacing */
   --space-0: 0;
