@@ -218,7 +218,7 @@
 					Add Selected to FlamIt
 				</button>
 				<button class="btn-danger" on:click={clearAll}>
-					Clear (delete All)
+					Clear
 				</button>
 			</div>
 		{/if}
@@ -238,7 +238,7 @@
 							</label>
 						{/if}
 						<div class="story-content">
-							<span>{story.headline}</span>
+							<a class="story-link" href={story.url} target="_blank" rel="noopener noreferrer">{story.headline}</a>
 							<span class="story-by">— {story.submittedBy}</span>
 						</div>
 					</div>
@@ -656,6 +656,17 @@
 
 	.story-content {
 		flex: 1;
+	}
+
+	.story-link {
+		color: var(--color-primary);
+		text-decoration: underline;
+		text-underline-offset: 2px;
+		font-weight: var(--font-weight-semibold);
+	}
+
+	.story-link:hover {
+		opacity: 0.8;
 	}
 
 	.story-by {

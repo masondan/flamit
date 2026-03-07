@@ -143,13 +143,14 @@
 <style>
 	.timer-section {
 		text-align: center;
+		margin-top: var(--space-4);
 	}
 
 	.timer-header {
 		font-size: var(--font-size-lg);
 		font-weight: var(--font-weight-bold);
 		color: #ffffff;
-		margin-bottom: var(--space-2);
+		margin-bottom: var(--space-1);
 	}
 
 	.timer-info {

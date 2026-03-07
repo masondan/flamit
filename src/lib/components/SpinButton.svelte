@@ -24,7 +24,7 @@
 		border-radius: 50%;
 		background: linear-gradient(135deg, #5422b0 0%, #7b3fe4 50%, #5422b0 100%);
 		color: var(--color-text-inverse);
-		font-size: var(--font-size-2xl);
+		font-size: 2rem;
 		font-weight: var(--font-weight-bold);
 		letter-spacing: 0.05em;
 		border: 4px solid var(--color-accent);
