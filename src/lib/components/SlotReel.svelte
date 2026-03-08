@@ -19,7 +19,7 @@
 		return new Promise((resolve) => {
 			resolveStop = resolve;
 			const startTime = performance.now();
-			const totalDuration = duration || 5000;
+			const totalDuration = duration || (4900 + Math.random() * 200);
 			offset = baseOffset;
 			const totalItems = items.length * ITEM_HEIGHT;
 			const hasTarget = targetIndex !== null && targetIndex !== undefined;
