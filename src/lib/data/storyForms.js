@@ -13,7 +13,6 @@ export const FORMAT_REEL = [
 	{ id: 'audio', label: 'Audio', icon: '/icons/icon-audio.svg', duration: 45 },
 	{ id: 'text', label: 'Text', icon: '/icons/icon-text.svg', duration: 30 },
 	{ id: 'free', label: 'Free', icon: '/icons/icon-free-go.svg', duration: 30 },
-	{ id: 'video', label: 'Video', icon: '/icons/icon-video.svg', duration: 60 },
 	{ id: 'data', label: 'Data', icon: '/icons/icon-data.svg', duration: 30 },
 	{ id: 'social', label: 'Social', icon: '/icons/icon-social.svg', duration: 30 },
 	{ id: 'free', label: 'Free', icon: '/icons/icon-free-go.svg', duration: 30 }
