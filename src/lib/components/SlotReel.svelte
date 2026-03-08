@@ -31,6 +31,7 @@
 			// For natural mode: settle to nearest item boundary
 			let settleTarget = null;
 			let settleStart = null;
+			let settleThreshold = null;
 
 			function frame(now) {
 				const elapsed = now - startTime;
@@ -39,9 +40,22 @@
 				const MAX_SPEED = 7;
 				if (progress < 0.3) {
 					offset += MAX_SPEED + Math.random() * 2;
-				} else if (progress < (hasTarget ? 0.80 : 0.75)) {
-					const phaseEnd = hasTarget ? 0.80 : 0.75;
+				} else if (hasTarget && progress < 0.80) {
+					const phaseEnd = 0.80;
 					const decelProgress = (progress - 0.3) / (phaseEnd - 0.3);
+					const ease = 1 - decelProgress * decelProgress * decelProgress * decelProgress;
+					offset += Math.max(0.5, MAX_SPEED * ease);
+				} else if (!hasTarget && settleThreshold === null) {
+					// Initialize settle threshold on first natural mode settle
+					settleThreshold = 0.70 + Math.random() * 0.10;
+					if (progress < settleThreshold) {
+						const decelProgress = (progress - 0.3) / (settleThreshold - 0.3);
+						const ease = 1 - decelProgress * decelProgress * decelProgress * decelProgress;
+						offset += Math.max(0.5, MAX_SPEED * ease);
+					}
+				} else if (!hasTarget && progress < settleThreshold) {
+					// Continue deceleration until settle threshold
+					const decelProgress = (progress - 0.3) / (settleThreshold - 0.3);
 					const ease = 1 - decelProgress * decelProgress * decelProgress * decelProgress;
 					offset += Math.max(0.5, MAX_SPEED * ease);
 				} else if (hasTarget) {
@@ -54,15 +68,17 @@
 					const glideProgress = (progress - 0.80) / 0.20;
 					const eased = 1 - Math.pow(1 - glideProgress, 3);
 					offset = glideStartOffset + (finalOffset - glideStartOffset) * eased;
-				} else {
-					// Natural: settle smoothly to nearest item boundary
+				} else if (!hasTarget) {
+					// Natural: settle smoothly to nearest item boundary with random offset
 					if (settleTarget === null) {
 						settleStart = offset;
 						// Snap to nearest item boundary 1-2 items ahead
 						const rawIndex = Math.ceil((offset - baseOffset) / ITEM_HEIGHT) + 1;
-						settleTarget = baseOffset + rawIndex * ITEM_HEIGHT;
+						// Add small random offset (±10% of item height) to break determinism
+						const randomOffset = (Math.random() - 0.5) * ITEM_HEIGHT * 0.2;
+						settleTarget = baseOffset + rawIndex * ITEM_HEIGHT + randomOffset;
 					}
-					const settleProgress = (progress - 0.75) / 0.25;
+					const settleProgress = (progress - settleThreshold) / (1 - settleThreshold);
 					const eased = 1 - Math.pow(1 - settleProgress, 3);
 					offset = settleStart + (settleTarget - settleStart) * eased;
 				}
@@ -77,8 +93,13 @@
 						offset = finalOffset % (baseOffset + totalItems);
 						if (offset < baseOffset) offset += totalItems;
 					} else if (settleTarget !== null) {
-						offset = settleTarget % (baseOffset + totalItems);
-						if (offset < baseOffset) offset += totalItems;
+						// For natural mode, find nearest valid item index
+						const settledPos = settleTarget % (baseOffset + totalItems);
+						if (settledPos < baseOffset) {
+							offset = settledPos + totalItems;
+						} else {
+							offset = settledPos;
+						}
 					}
 					// Calculate landed index
 					const landedIndex = Math.round((offset - baseOffset) / ITEM_HEIGHT) % items.length;
