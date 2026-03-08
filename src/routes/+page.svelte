@@ -5,7 +5,7 @@
 	import SpinButton from '$lib/components/SpinButton.svelte';
 	import ResultPanel from '$lib/components/ResultPanel.svelte';
 	import Timer from '$lib/components/Timer.svelte';
-	import { gameState, isSpinning, isLocked } from '$lib/stores/gameStore.js';
+	import { gameState, isSpinning } from '$lib/stores/gameStore.js';
 	import { FORMAT_REEL, getDuration } from '$lib/data/storyForms.js';
 	import { fetchStories } from '$lib/data/stories.js';
 
@@ -57,12 +57,13 @@
 	$: if ($gameState.timerRunning) stopSpinAudio();
 
 	async function handleSpin() {
-		if ($isSpinning || $gameState.timerRunning || ($isLocked && !$gameState.isFreeChoice)) return;
+		if ($isSpinning || $gameState.timerRunning) return;
 
 		const state = $gameState;
 		const storyIdx = getNextStoryIndex(state.usedStoryIndices, stories.length);
 
 		gameState.update(s => ({ ...s, spinning: true }));
+		localStorage.removeItem('flamit_timer');
 
 		stopSpinAudio();
 		try {
@@ -82,7 +83,6 @@
 
 		const landedFormItem = formReelItems[landedFormIdx];
 		const form = landedFormItem?.form || FORMAT_REEL[0];
-		const isFreeChoice = form.id === 'free';
 
 		currentStory = stories[storyIdx];
 		currentForm = form;
@@ -91,31 +91,12 @@
 		gameState.update(s => ({
 			...s,
 			spinning: false,
-			locked: !isFreeChoice,
-			isFreeChoice,
 			spinCount: s.spinCount + 1,
 			usedStoryIndices: [...s.usedStoryIndices, storyIdx],
 			usedFormIds: [...s.usedFormIds, form.id],
 			currentStoryIndex: storyIdx,
 			currentFormIndex: landedFormIdx
 		}));
-	}
-
-	function handleSpinAgain() {
-		gameState.update(s => ({
-			...s,
-			locked: false,
-			isFreeChoice: false
-		}));
-		handleSpin();
-	}
-
-	function handleReset() {
-		stopSpinAudio();
-		gameState.reset();
-		currentStory = null;
-		currentForm = null;
-		localStorage.removeItem('flamit_timer');
 	}
 
 	onMount(async () => {
@@ -161,27 +142,19 @@
 	<div class="spin-area">
 		<SpinButton
 			spinning={$isSpinning}
-			disabled={$gameState.timerRunning || ($isLocked && !$gameState.isFreeChoice)}
+			disabled={$gameState.timerRunning}
 			onClick={handleSpin}
 		/>
 	</div>
 
-	<ResultPanel
-		story={currentStory}
-		form={currentForm}
-		isFreeChoice={$gameState.isFreeChoice}
-		onSpinAgain={handleSpinAgain}
-	/>
+	{#if currentForm && !$isSpinning}
+		<ResultPanel
+			story={currentStory}
+			form={currentForm}
+		/>
 
-	{#if currentForm && ($isLocked || $gameState.isFreeChoice)}
 		<Timer durationMinutes={timerDuration} />
 	{/if}
-
-	<div class="footer-actions">
-		<button class="reset-btn" on:click={handleReset}>
-			Reset FlamIt
-		</button>
-	</div>
 </div>
 
 <style>
@@ -226,26 +199,5 @@
 		padding: var(--space-6) 0;
 	}
 
-	.footer-actions {
-		display: flex;
-		justify-content: center;
-		padding: var(--space-2) 0;
-		margin-top: auto;
-	}
 
-	.reset-btn {
-		font-size: var(--font-size-xs);
-		color: rgba(255, 255, 255, 0.6);
-		text-decoration: underline;
-		text-underline-offset: 2px;
-		background: none;
-		border: none;
-		cursor: pointer;
-		padding: var(--space-2);
-		transition: color var(--transition-fast);
-	}
-
-	.reset-btn:hover {
-		color: #ffffff;
-	}
 </style>

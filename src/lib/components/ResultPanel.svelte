@@ -1,34 +1,24 @@
 <script>
 	export let story = null;
 	export let form = null;
-	export let isFreeChoice = false;
-	export let onSpinAgain = null;
 </script>
 
 {#if story && form}
 	<div class="result-panel">
-		{#if isFreeChoice}
+		{#if form.id === 'free'}
 			<p class="result-instruction">
-				Choose <strong>any format</strong> for the story below — or spin again!
+				Choose <strong>any format</strong> for the story below
 			</p>
-			<div class="story-link">
-				<a href={story.url} target="_blank" rel="noopener noreferrer">
-					{story.headline}
-				</a>
-			</div>
-			<button class="spin-again-btn" on:click={onSpinAgain}>
-				Spin Again
-			</button>
 		{:else}
 			<p class="result-instruction">
 				Create a <strong class="form-highlight">{form.label}</strong> story based on:
 			</p>
-			<div class="story-link">
-				<a href={story.url} target="_blank" rel="noopener noreferrer">
-					{story.headline}
-				</a>
-			</div>
 		{/if}
+		<div class="story-link">
+			<a href={story.url} target="_blank" rel="noopener noreferrer">
+				{story.headline}
+			</a>
+		</div>
 	</div>
 {/if}
 
@@ -69,21 +59,5 @@
 
 	.story-link a:hover {
 		opacity: 0.8;
-	}
-
-	.spin-again-btn {
-		background: var(--color-primary);
-		color: var(--color-text-inverse);
-		padding: var(--space-2) var(--space-4);
-		border-radius: var(--radius-md);
-		font-size: var(--font-size-sm);
-		font-weight: var(--font-weight-semibold);
-		border: none;
-		cursor: pointer;
-		transition: opacity var(--transition-fast);
-	}
-
-	.spin-again-btn:hover {
-		opacity: 0.9;
 	}
 </style>

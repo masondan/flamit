@@ -18,14 +18,12 @@ function persistState(state) {
 }
 
 const defaults = {
-	locked: false,
 	spinning: false,
 	spinCount: 0,
 	currentStoryIndex: null,
 	currentFormIndex: null,
 	usedStoryIndices: [],
 	usedFormIds: [],
-	isFreeChoice: false,
 	timerRunning: false,
 	timerSeconds: 0,
 	timerEndTime: null,
@@ -61,5 +59,4 @@ function createGameStore() {
 
 export const gameState = createGameStore();
 
-export const isLocked = derived(gameState, $s => $s.locked);
 export const isSpinning = derived(gameState, $s => $s.spinning);
