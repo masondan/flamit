@@ -118,6 +118,7 @@
 
 <div class="content">
 	<header class="header">
+		<flam-nav current="flamit" style="color: #fff; position: absolute; left: 0; top: 0;"></flam-nav>
 		<img class="logo" src="/logos/logo-flamit-logotype-white.png" alt="FlamIt" />
 		<p class="subtitle">Spin to create</p>
 	</header>
@@ -171,6 +172,7 @@
 
 	.header {
 		text-align: center;
+		position: relative;
 	}
 
 	.logo {
