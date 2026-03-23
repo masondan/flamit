@@ -1,19 +1,6 @@
 const API_BASE = '/api';
 
-const DEFAULT_STORIES = [
-	{
-		id: 1,
-		headline: 'Sample Story 1',
-		url: 'https://example.com/story-1',
-		submitted_by: 'Demo'
-	},
-	{
-		id: 2,
-		headline: 'Sample Story 2',
-		url: 'https://example.com/story-2',
-		submitted_by: 'Demo'
-	}
-];
+const DEFAULT_STORIES = [];
 
 function shuffle(arr) {
 	const shuffled = [...arr];
