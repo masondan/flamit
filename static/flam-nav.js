@@ -85,6 +85,14 @@ class FlamNav extends HTMLElement {
 
 		this.shadowRoot.innerHTML = `
 			<style>
+				@font-face {
+					font-family: 'Saira';
+					src: url('https://fonts.gstatic.com/s/saira/v20/memWYa2wxmKQyPMrZX79wwYZQMhsyuShhKMjjbU9uXuA71rDosg7lwYmUVY.woff2') format('woff2');
+					font-weight: 100 900;
+					font-style: normal;
+					font-display: swap;
+				}
+
 				:host {
 					display: flex;
 					align-items: center;
@@ -103,7 +111,7 @@ class FlamNav extends HTMLElement {
 				}
 
 				.menu-btn:hover {
-					color: #5422b0;
+					color: var(--flam-nav-hover, #ffffff);
 				}
 
 				.menu-btn svg {
@@ -134,15 +142,18 @@ class FlamNav extends HTMLElement {
 					width: 180px;
 					background: #fff;
 					z-index: 9999;
-					transform: translateX(-100%);
-					transition: transform 250ms ease;
+					text-align: left;
+					opacity: 0;
+					visibility: hidden;
+					transition: opacity 250ms ease, visibility 250ms ease;
 					display: flex;
 					flex-direction: column;
 					box-shadow: 2px 0 12px rgba(0, 0, 0, 0.15);
 				}
 
 				.drawer.open {
-					transform: translateX(0);
+					opacity: 1;
+					visibility: visible;
 				}
 
 				.drawer-header {
@@ -156,9 +167,9 @@ class FlamNav extends HTMLElement {
 					gap: 8px;
 					text-decoration: none;
 					color: #5422b0;
-					font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+					font-family: 'Saira', -apple-system, BlinkMacSystemFont, sans-serif;
 					font-size: 15px;
-					font-weight: 600;
+					font-weight: 750;
 				}
 
 				.drawer-header img {
@@ -178,9 +189,9 @@ class FlamNav extends HTMLElement {
 					display: block;
 					padding: 10px 16px;
 					text-decoration: none;
-					font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+					font-family: 'Saira', -apple-system, BlinkMacSystemFont, sans-serif;
 					font-size: 15px;
-					font-weight: 450;
+					font-weight: 550;
 					color: #333;
 					transition: background-color 150ms ease;
 				}
@@ -191,12 +202,12 @@ class FlamNav extends HTMLElement {
 
 				.drawer-list li a.current {
 					color: #5422b0;
-					font-weight: 600;
+					font-weight: 750;
 					background-color: #f0e6f7;
 				}
 
 				.drawer-list li a.training {
-					color: #999;
+					color: #777;
 				}
 
 				.drawer-list li a.training.current {
