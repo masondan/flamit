@@ -6,6 +6,7 @@
 	"display": "standalone",
 	"background_color": "#5422b0",
 	"theme_color": "#5422b0",
+	"scope": "/",
 	"icons": [
 		{
 			"src": "/logos/logo-flamit-maskable.png",

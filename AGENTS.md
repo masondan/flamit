@@ -31,3 +31,25 @@
 - `/` - Main FlamIt game (spinner + timer)
 - `/stories` - Journalist story submission form
 - `/stories?admin` - Admin view to review and approve submissions
+
+## Manifest & PWA Configuration
+
+FlamIt is configured as a standalone PWA app:
+
+**Manifest** (`static/manifest.json`):
+- `display: "standalone"` — removes browser chrome when installed
+- `scope: "/"` — ensures proper PWA scope
+- Theme & background colors: `#5422b0` (Flam family standard)
+- Icons: maskable PNG (512x512) for adaptive icon support on Android + Apple touch icon
+
+**Meta tags** (`src/app.html`):
+- `theme-color` meta tag for browser UI theming
+- Open Graph tags for sharing (og:image uses `/logos/logo-flamit-og.png`)
+- Twitter card tags for social media sharing
+- `robots: noindex, nofollow` (training/non-commercial app)
+
+**Icon location**: `/static/logos/` (not `/static/icons/` which contains UI icons only)
+- `logo-flamit-maskable.png` — PWA icon
+- `logo-flamit-apple.png` — Apple touch icon
+- `logo-flamit-og.png` — OG/Twitter card image
+- `logo-flamit-favicon.*` — Favicon (ico + svg)
