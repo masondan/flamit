@@ -1,24 +1,24 @@
 {
-	"name": "FlamIt",
-	"short_name": "FlamIt",
-	"description": "Spin to create. A gamified story tool for journalism training.",
-	"start_url": "/",
-	"display": "standalone",
-	"background_color": "#5422b0",
-	"theme_color": "#5422b0",
-	"scope": "/",
-	"icons": [
-		{
-			"src": "/logos/logo-flamit-maskable.png",
-			"sizes": "512x512",
-			"type": "image/png",
-			"purpose": "maskable"
-		},
-		{
-			"src": "/logos/logo-flamit-apple.png",
-			"sizes": "200x200",
-			"type": "image/png",
-			"purpose": "any"
-		}
-	]
+  "name": "FlamIt",
+  "short_name": "FlamIt",
+  "description": "Spin to create. A gamified story tool for journalism training.",
+  "start_url": "/",
+  "display": "browser",
+  "background_color": "#5422b0",
+  "theme_color": "#5422b0",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/logos/logo-flamit-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/logos/logo-flamit-apple.png",
+      "sizes": "200x200",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
 }
