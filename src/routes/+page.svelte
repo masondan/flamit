@@ -118,9 +118,11 @@
 
 <div class="content">
 	<header class="header">
-		<flam-nav current="flamit" style="color: #f0e6f7; position: absolute; left: 0; top: 0;"></flam-nav>
-		<img class="logo" src="/logos/logo-flamit-logotype-white.png" alt="FlamIt" />
-		<p class="subtitle">Spin to create</p>
+		<flam-nav current="flamit" style="color: #f0e6f7;"></flam-nav>
+		<div class="header-center">
+			<img class="logo" src="/logos/logo-flamit-logotype-white.png" alt="FlamIt" />
+			<p class="subtitle">Spin to create</p>
+		</div>
 	</header>
 
 	<div class="reels-row">
@@ -166,13 +168,28 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--space-4);
-		padding: var(--space-6);
+		padding-left: 0;
+		padding-right: 0;
 		padding-top: var(--space-10);
+		padding-bottom: var(--space-6);
 	}
 
 	.header {
-		text-align: center;
 		position: relative;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding-left: var(--space-6);
+		padding-right: var(--space-6);
+	}
+
+	flam-nav {
+		flex-shrink: 0;
+	}
+
+	.header-center {
+		flex: 1;
+		text-align: center;
 	}
 
 	.logo {
@@ -180,6 +197,9 @@
 		max-width: 160px;
 		height: auto;
 		margin-bottom: var(--space-1);
+		margin-left: auto;
+		margin-right: auto;
+		display: block;
 	}
 
 	.subtitle {
@@ -193,12 +213,14 @@
 		display: flex;
 		gap: var(--space-3);
 		margin-top: var(--space-6);
+		padding-left: var(--space-6);
+		padding-right: var(--space-6);
 	}
 
 	.spin-area {
 		display: flex;
 		justify-content: center;
-		padding: var(--space-6) 0;
+		padding: var(--space-6);
 	}
 
 
