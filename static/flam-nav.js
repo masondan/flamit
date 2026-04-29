@@ -87,6 +87,7 @@ class FlamNav extends HTMLElement {
 				{ id: 'audioflam', name: 'AudioFlam', url: 'https://audioflam.flamtools.com' },
 				{ id: 'chartflam', name: 'ChartFlam', url: 'https://chartflam.flamtools.com' },
 				{ id: 'mapflam', name: 'MapFlam', url: 'https://mapflam.flamtools.com' },
+				{ id: 'subflam', name: 'SubFlam', url: 'https://subflam.flamtools.com' },
 				{ id: 'storyflam', name: 'StoryFlam', url: 'https://storyflam.flamtools.com', training: true },
 				{ id: 'flamit', name: 'FlamIt', url: 'https://flamit.flamtools.com', training: true }
 			];
@@ -112,7 +113,7 @@ class FlamNav extends HTMLElement {
 				const color = isCurrent ? '#5422b0' : (app.training ? '#777' : '#333');
 				const bg = isCurrent ? '#f0e6f7' : 'transparent';
 				const weight = isCurrent ? '750' : '550';
-				const separator = i === 5 ? `<div style="height:1px;background:#eee;margin:6px 16px;"></div>` : '';
+				const separator = i === 6 ? `<div style="height:1px;background:#eee;margin:6px 16px;"></div>` : '';
 				return `${separator}<a href="${app.url}" style="display:block;padding:10px 16px;text-decoration:none;font-size:15px;font-weight:${weight};color:${color};background:${bg};">${app.name}</a>`;
 			}).join('');
 
