@@ -3,7 +3,7 @@
   "short_name": "FlamIt",
   "description": "Spin to create. A gamified story tool for journalism training.",
   "start_url": "/",
-  "display": "browser",
+  "display": "standalone",
   "background_color": "#5422b0",
   "theme_color": "#5422b0",
   "scope": "/",
