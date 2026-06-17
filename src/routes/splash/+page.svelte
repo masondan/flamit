@@ -2,8 +2,9 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { authStore } from '$lib/stores/authStore.js';
+	import { get } from 'svelte/store';
 
-	let courseId = '';
+	let password = '';
 	let loading = false;
 	let focused = false;
 	/** @type {'idle' | 'success'} */
@@ -24,24 +25,24 @@
 	}
 
 	async function handleSubmit() {
-		const trimmed = courseId.trim();
+		const trimmed = password.trim();
 		if (!trimmed || loading) return;
 
 		loading = true;
 		try {
-			const res = await fetch('/api/courseIds/validate', {
+			const res = await fetch('/api/admin/auth', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ courseId: trimmed })
+				body: JSON.stringify({ password: trimmed })
 			});
 			const data = await res.json();
 
-			if (data.valid) {
+			if (data.success) {
 				buttonState = 'success';
-				authStore.setCourseId(trimmed);
+				authStore.setAuthenticated(true);
 				setTimeout(() => goto('/'), 600);
 			} else {
-				showToast(data.message || 'Expired Key');
+				showToast(data.message || 'Incorrect password');
 				buttonState = 'idle';
 			}
 		} catch {
@@ -56,7 +57,15 @@
 		if (e.key === 'Enter') handleSubmit();
 	}
 
-	$: hasInput = courseId.trim().length > 0;
+	onMount(() => {
+		// If already authenticated, redirect to home
+		const { authenticated } = get(authStore);
+		if (authenticated) {
+			goto('/');
+		}
+	});
+
+	$: hasInput = password.trim().length > 0;
 	$: isActive = hasInput && !loading;
 </script>
 
@@ -67,10 +76,10 @@
 		<div class="form-area">
 			<div class="input-row">
 				<input
-					class="course-input"
-					type="text"
-					placeholder="Enter your course key"
-					bind:value={courseId}
+					class="password-input"
+					type="password"
+					placeholder="Enter password"
+					bind:value={password}
 					on:keydown={handleKeydown}
 					on:focus={() => (focused = true)}
 					on:blur={() => (focused = false)}
@@ -87,7 +96,7 @@
 						class:success={buttonState === 'success'}
 						on:click={handleSubmit}
 						disabled={!isActive}
-						aria-label="Submit course key"
+						aria-label="Submit password"
 					>
 						{#if buttonState === 'success'}
 							<!-- Checkmark -->
@@ -143,7 +152,7 @@
 		top: 50%;
 		left: 50%;
 		transform: translate(-50%, -50%);
-		height: 40px;
+		height: 48px;
 		width: auto;
 	}
 
@@ -167,7 +176,7 @@
 		min-height: 44px;
 	}
 
-	.course-input {
+	.password-input {
 		flex: 1;
 		background: transparent;
 		border: none;
@@ -180,13 +189,13 @@
 		min-width: 0;
 	}
 
-	.course-input::placeholder {
+	.password-input::placeholder {
 		color: #777777;
 		font-size: 16px;
 		font-family: var(--font-family-base);
 	}
 
-	.course-input:disabled {
+	.password-input:disabled {
 		opacity: 0.75;
 	}
 

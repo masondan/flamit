@@ -1,12 +1,12 @@
 import { writable } from 'svelte/store';
 
-const STORAGE_KEY = 'flamit_course_id';
+const STORAGE_KEY = 'flamit_authenticated';
 
-/** @typedef {{ courseId: string | null }} AuthState */
+/** @typedef {{ authenticated: boolean }} AuthState */
 
 function createAuthStore() {
 	/** @type {import('svelte/store').Writable<AuthState>} */
-	const store = writable({ courseId: null });
+	const store = writable({ authenticated: false });
 	const { subscribe, set } = store;
 
 	return {
@@ -16,25 +16,25 @@ function createAuthStore() {
 		init() {
 			if (typeof localStorage === 'undefined') return;
 			const stored = localStorage.getItem(STORAGE_KEY);
-			set({ courseId: stored ?? null });
+			set({ authenticated: stored === 'true' });
 		},
 
-		/** Persist a valid course ID
-		 * @param {string} id
+		/** Mark as authenticated after password verification
+		 * @param {boolean} isAuthenticated
 		 */
-		setCourseId(id) {
+		setAuthenticated(isAuthenticated) {
 			if (typeof localStorage !== 'undefined') {
-				localStorage.setItem(STORAGE_KEY, id);
+				localStorage.setItem(STORAGE_KEY, isAuthenticated ? 'true' : 'false');
 			}
-			set({ courseId: id });
+			set({ authenticated: isAuthenticated });
 		},
 
-		/** Clear the stored course ID (e.g. on revocation) */
-		clear() {
+		/** Clear authentication (logout) */
+		logout() {
 			if (typeof localStorage !== 'undefined') {
 				localStorage.removeItem(STORAGE_KEY);
 			}
-			set({ courseId: null });
+			set({ authenticated: false });
 		}
 	};
 }

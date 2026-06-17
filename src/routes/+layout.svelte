@@ -16,8 +16,8 @@
 		const isPublic = PUBLIC_ROUTES.some(r => currentPath.startsWith(r));
 
 		if (!isPublic) {
-			const { courseId } = get(authStore);
-			if (!courseId) {
+			const { authenticated } = get(authStore);
+			if (!authenticated) {
 				goto('/splash');
 			}
 		}
