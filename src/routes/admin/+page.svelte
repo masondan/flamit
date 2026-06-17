@@ -1,12 +1,23 @@
 <script>
 	import { onMount } from 'svelte';
 
+	// Course Key state
 	let courseKeyInput = '';
 	let originalKey = '';
 	/** @type {'idle' | 'active' | 'confirmed'} */
-	let buttonState = 'idle';
+	let courseKeyButtonState = 'idle';
 	/** @type {ReturnType<typeof setTimeout> | null} */
-	let confirmTimer = null;
+	let courseKeyConfirmTimer = null;
+
+	// App Password state
+	let appPasswordInput = '';
+	let appPasswordLoading = false;
+	let appPasswordFocused = false;
+	/** @type {'idle' | 'active' | 'confirmed'} */
+	let appPasswordButtonState = 'idle';
+	let isDefaultPassword = false;
+
+	// Toast state
 	/** @type {{ message: string, type: 'error' | 'success' } | null} */
 	let toast = null;
 	/** @type {ReturnType<typeof setTimeout> | null} */
@@ -22,9 +33,10 @@
 		toastTimer = setTimeout(() => { toast = null; }, 3000);
 	}
 
-	async function handleSet() {
+	// ===== Course Key Functions =====
+	async function handleCourseKeySet() {
 		const trimmed = courseKeyInput.trim();
-		if (!trimmed || buttonState !== 'active') return;
+		if (!trimmed || courseKeyButtonState !== 'active') return;
 
 		try {
 			const res = await fetch('/api/courseIds/set', {
@@ -36,11 +48,11 @@
 
 			if (data.success) {
 				originalKey = trimmed;
-				buttonState = 'confirmed';
+				courseKeyButtonState = 'confirmed';
 				showToast('Course Key set');
-				if (confirmTimer) clearTimeout(confirmTimer);
-				confirmTimer = setTimeout(() => {
-					buttonState = courseKeyInput.trim() !== originalKey ? 'active' : 'idle';
+				if (courseKeyConfirmTimer) clearTimeout(courseKeyConfirmTimer);
+				courseKeyConfirmTimer = setTimeout(() => {
+					courseKeyButtonState = courseKeyInput.trim() !== originalKey ? 'active' : 'idle';
 				}, 2000);
 			} else {
 				showToast(data.message || 'Failed to set key', 'error');
@@ -50,7 +62,7 @@
 		}
 	}
 
-	async function handleReset() {
+	async function handleCourseKeyReset() {
 		try {
 			const res = await fetch('/api/courseIds/reset', {
 				method: 'POST',
@@ -61,7 +73,7 @@
 			if (data.success) {
 				courseKeyInput = '';
 				originalKey = '';
-				buttonState = 'idle';
+				courseKeyButtonState = 'idle';
 				showToast('Course Key cleared');
 			} else {
 				showToast(data.message || 'Failed to clear key', 'error');
@@ -71,14 +83,68 @@
 		}
 	}
 
-	function handleInput() {
-		if (buttonState === 'confirmed') return;
+	function handleCourseKeyInput() {
+		if (courseKeyButtonState === 'confirmed') return;
 		const trimmed = courseKeyInput.trim();
-		buttonState = trimmed.length > 0 ? 'active' : 'idle';
+		courseKeyButtonState = trimmed.length > 0 ? 'active' : 'idle';
 	}
 
+	// ===== App Password Functions =====
+	async function handleAppPasswordSet() {
+		const trimmed = appPasswordInput.trim();
+		if (!trimmed || appPasswordButtonState !== 'active' || appPasswordLoading) return;
+
+		appPasswordLoading = true;
+		try {
+			const res = await fetch('/api/admin/password', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ password: trimmed })
+			});
+			const data = await res.json();
+
+			if (data.success) {
+				appPasswordButtonState = 'confirmed';
+				showToast('App password updated');
+				setTimeout(() => {
+					appPasswordButtonState = 'idle';
+					appPasswordInput = '';
+					appPasswordFocused = false;
+				}, 1500);
+				// Reload current password
+				await loadAppPassword();
+			} else {
+				showToast(data.message || 'Failed to update password', 'error');
+				appPasswordButtonState = 'idle';
+			}
+		} catch {
+			showToast('Connection error', 'error');
+			appPasswordButtonState = 'idle';
+		}
+		appPasswordLoading = false;
+	}
+
+	function handleAppPasswordInput() {
+		if (appPasswordButtonState === 'confirmed') return;
+		const trimmed = appPasswordInput.trim();
+		appPasswordButtonState = trimmed.length > 0 ? 'active' : 'idle';
+	}
+
+	async function loadAppPassword() {
+		try {
+			const res = await fetch('/api/admin/password');
+			if (res.ok) {
+				const data = await res.json();
+				isDefaultPassword = data.isDefault;
+			}
+		} catch {
+			// silently ignore
+		}
+	}
+
+	// ===== Lifecycle =====
 	onMount(async () => {
-		// Load current key from backend
+		// Load current course key
 		try {
 			const res = await fetch('/api/courseIds/current');
 			if (res.ok) {
@@ -89,8 +155,11 @@
 				}
 			}
 		} catch {
-			// silently ignore — field stays empty
+			// silently ignore
 		}
+
+		// Load app password status
+		await loadAppPassword();
 	});
 </script>
 
@@ -106,47 +175,94 @@
 	</header>
 
 	<main class="admin-content">
-		<div class="field-group">
-			<label class="field-label" for="course-key-input">Course Key</label>
-			<div class="input-row">
-				<input
-					id="course-key-input"
-					class="key-input"
-					type="text"
-					placeholder="Enter course key"
-					bind:value={courseKeyInput}
-					on:input={handleInput}
-					autocomplete="off"
-					autocorrect="off"
-					autocapitalize="off"
-					spellcheck="false"
-				/>
-				<button
-					class="set-btn"
-					class:set-btn--active={buttonState === 'active'}
-					class:set-btn--confirmed={buttonState === 'confirmed'}
-					on:click={handleSet}
-					disabled={buttonState !== 'active'}
-					aria-label="Set course key"
-				>
-					{#if buttonState === 'confirmed'}
-						<!-- Checkmark -->
-						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-							<polyline points="20 6 9 17 4 12" />
-						</svg>
-					{:else}
-						<!-- Chevron right -->
-						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-							<polyline points="9 18 15 12 9 6" />
-						</svg>
+		<!-- App Password Section -->
+		<div class="section">
+			<h2 class="section-title">App Password</h2>
+			<p class="section-subtitle">Users must enter this password to access FlamIt</p>
+			<div class="field-group">
+				<label class="field-label" for="app-password-input">Password</label>
+				<p class="field-hint">{isDefaultPassword ? 'Currently using default password' : 'Custom password set'}</p>
+				<div class="input-row">
+					<input
+						id="app-password-input"
+						class="password-input"
+						type="password"
+						placeholder="Enter new password"
+						bind:value={appPasswordInput}
+						on:input={handleAppPasswordInput}
+						on:focus={() => (appPasswordFocused = true)}
+						on:blur={() => (appPasswordFocused = false)}
+						autocomplete="off"
+						disabled={appPasswordLoading}
+					/>
+					{#if appPasswordFocused || (appPasswordInput && appPasswordButtonState !== 'confirmed')}
+						<button
+							class="set-btn"
+							class:set-btn--active={appPasswordButtonState === 'active'}
+							class:set-btn--confirmed={appPasswordButtonState === 'confirmed'}
+							on:click={handleAppPasswordSet}
+							disabled={appPasswordButtonState !== 'active' || appPasswordLoading}
+							aria-label="Set app password"
+						>
+							{#if appPasswordButtonState === 'confirmed'}
+								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+									<polyline points="20 6 9 17 4 12" />
+								</svg>
+							{:else}
+								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+									<polyline points="9 18 15 12 9 6" />
+								</svg>
+							{/if}
+						</button>
 					{/if}
-				</button>
+				</div>
 			</div>
 		</div>
 
-		<button class="reset-btn" on:click={handleReset}>
-			Reset Course Key
-		</button>
+		<!-- Course Key Section -->
+		<div class="section">
+			<h2 class="section-title">Course Key</h2>
+			<p class="section-subtitle">Rotating key for training sessions (optional)</p>
+			<div class="field-group">
+				<label class="field-label" for="course-key-input">Key</label>
+				<div class="input-row">
+					<input
+						id="course-key-input"
+						class="key-input"
+						type="text"
+						placeholder="Enter course key"
+						bind:value={courseKeyInput}
+						on:input={handleCourseKeyInput}
+						autocomplete="off"
+						autocorrect="off"
+						autocapitalize="off"
+						spellcheck="false"
+					/>
+					<button
+						class="set-btn"
+						class:set-btn--active={courseKeyButtonState === 'active'}
+						class:set-btn--confirmed={courseKeyButtonState === 'confirmed'}
+						on:click={handleCourseKeySet}
+						disabled={courseKeyButtonState !== 'active'}
+						aria-label="Set course key"
+					>
+						{#if courseKeyButtonState === 'confirmed'}
+							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+								<polyline points="20 6 9 17 4 12" />
+							</svg>
+						{:else}
+							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+								<polyline points="9 18 15 12 9 6" />
+							</svg>
+						{/if}
+					</button>
+				</div>
+			</div>
+
+			<button class="reset-btn" on:click={handleCourseKeyReset}>
+				Reset Course Key
+			</button>
+		</div>
 	</main>
 
 	{#if toast}
@@ -194,8 +310,36 @@
 		padding: var(--space-8) var(--space-6);
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-4);
+		gap: var(--space-10);
 		width: 100%;
+		max-width: 500px;
+	}
+
+	.section {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-4);
+		padding-bottom: var(--space-6);
+		border-bottom: 1px solid var(--color-border-light);
+	}
+
+	.section:last-child {
+		border-bottom: none;
+	}
+
+	.section-title {
+		font-size: 18px;
+		font-weight: var(--font-weight-bold);
+		color: #1f1f1f;
+		margin: 0;
+		font-family: var(--font-family-base);
+	}
+
+	.section-subtitle {
+		font-size: 14px;
+		color: var(--color-text-muted);
+		margin: 0;
+		font-family: var(--font-family-base);
 	}
 
 	.field-group {
@@ -205,10 +349,19 @@
 	}
 
 	.field-label {
-		font-size: 16px;
+		font-size: 14px;
 		font-weight: var(--font-weight-semibold);
 		color: #333333;
 		font-family: var(--font-family-base);
+		text-transform: uppercase;
+		letter-spacing: 0.5px;
+	}
+
+	.field-hint {
+		font-size: 12px;
+		color: var(--color-text-muted);
+		margin: 0;
+		font-style: italic;
 	}
 
 	.input-row {
@@ -226,7 +379,8 @@
 		border-color: var(--color-primary);
 	}
 
-	.key-input {
+	.key-input,
+	.password-input {
 		flex: 1;
 		background: transparent;
 		border: none;
@@ -238,11 +392,16 @@
 		min-width: 0;
 	}
 
-	.key-input::placeholder {
+	.key-input::placeholder,
+	.password-input::placeholder {
 		color: var(--color-text-muted);
 	}
 
-	/* Circular set button */
+	.key-input:disabled,
+	.password-input:disabled {
+		opacity: 0.75;
+	}
+
 	.set-btn {
 		flex-shrink: 0;
 		width: 36px;
@@ -279,7 +438,6 @@
 		cursor: default;
 	}
 
-	/* Reset button */
 	.reset-btn {
 		width: 100%;
 		height: var(--touch-target-min);
@@ -298,7 +456,6 @@
 		opacity: 0.85;
 	}
 
-	/* Toast */
 	.toast {
 		position: fixed;
 		bottom: var(--space-8);

@@ -33,21 +33,24 @@ export async function onRequestOptions() {
  * @param {import('@cloudflare/workers-types').EventContext<any, any, any>} context
  */
 export async function onRequestPost(context) {
-	const adminPassword = context.env.ADMIN_PASSWORD;
+	const kv = context.env.COURSE_IDS;
 	const body = await parseBody(context.request);
 	const { password } = body;
-
-	if (!adminPassword) {
-		return json({ success: false, message: 'Admin password not configured' }, 500);
-	}
 
 	if (!password || typeof password !== 'string') {
 		return json({ success: false, message: 'Password is required' }, 400);
 	}
 
-	if (password !== adminPassword) {
-		return json({ success: false, message: 'Incorrect password' }, 401);
-	}
+	try {
+		const stored = await kv.get('app_password');
+		const appPassword = stored || 'Flam!'; // Default to Flam! if not set in KV
 
-	return json({ success: true, message: 'OK' });
+		if (password !== appPassword) {
+			return json({ success: false, message: 'Incorrect password' }, 401);
+		}
+
+		return json({ success: true, message: 'OK' });
+	} catch (err) {
+		return json({ success: false, message: 'Authentication error' }, 500);
+	}
 }
