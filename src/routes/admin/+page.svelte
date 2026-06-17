@@ -1,14 +1,6 @@
 <script>
 	import { onMount } from 'svelte';
 
-	// Course Key state
-	let courseKeyInput = '';
-	let originalKey = '';
-	/** @type {'idle' | 'active' | 'confirmed'} */
-	let courseKeyButtonState = 'idle';
-	/** @type {ReturnType<typeof setTimeout> | null} */
-	let courseKeyConfirmTimer = null;
-
 	// App Password state
 	let appPasswordInput = '';
 	let appPasswordLoading = false;
@@ -31,62 +23,6 @@
 		if (toastTimer) clearTimeout(toastTimer);
 		toast = { message, type };
 		toastTimer = setTimeout(() => { toast = null; }, 3000);
-	}
-
-	// ===== Course Key Functions =====
-	async function handleCourseKeySet() {
-		const trimmed = courseKeyInput.trim();
-		if (!trimmed || courseKeyButtonState !== 'active') return;
-
-		try {
-			const res = await fetch('/api/courseIds/set', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ courseId: trimmed })
-			});
-			const data = await res.json();
-
-			if (data.success) {
-				originalKey = trimmed;
-				courseKeyButtonState = 'confirmed';
-				showToast('Course Key set');
-				if (courseKeyConfirmTimer) clearTimeout(courseKeyConfirmTimer);
-				courseKeyConfirmTimer = setTimeout(() => {
-					courseKeyButtonState = courseKeyInput.trim() !== originalKey ? 'active' : 'idle';
-				}, 2000);
-			} else {
-				showToast(data.message || 'Failed to set key', 'error');
-			}
-		} catch {
-			showToast('Connection error', 'error');
-		}
-	}
-
-	async function handleCourseKeyReset() {
-		try {
-			const res = await fetch('/api/courseIds/reset', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' }
-			});
-			const data = await res.json();
-
-			if (data.success) {
-				courseKeyInput = '';
-				originalKey = '';
-				courseKeyButtonState = 'idle';
-				showToast('Course Key cleared');
-			} else {
-				showToast(data.message || 'Failed to clear key', 'error');
-			}
-		} catch {
-			showToast('Connection error', 'error');
-		}
-	}
-
-	function handleCourseKeyInput() {
-		if (courseKeyButtonState === 'confirmed') return;
-		const trimmed = courseKeyInput.trim();
-		courseKeyButtonState = trimmed.length > 0 ? 'active' : 'idle';
 	}
 
 	// ===== App Password Functions =====
@@ -144,20 +80,6 @@
 
 	// ===== Lifecycle =====
 	onMount(async () => {
-		// Load current course key
-		try {
-			const res = await fetch('/api/courseIds/current');
-			if (res.ok) {
-				const data = await res.json();
-				if (data.courseId) {
-					courseKeyInput = data.courseId;
-					originalKey = data.courseId;
-				}
-			}
-		} catch {
-			// silently ignore
-		}
-
 		// Load app password status
 		await loadAppPassword();
 	});
@@ -217,51 +139,6 @@
 					{/if}
 				</div>
 			</div>
-		</div>
-
-		<!-- Course Key Section -->
-		<div class="section">
-			<h2 class="section-title">Course Key</h2>
-			<p class="section-subtitle">Rotating key for training sessions (optional)</p>
-			<div class="field-group">
-				<label class="field-label" for="course-key-input">Key</label>
-				<div class="input-row">
-					<input
-						id="course-key-input"
-						class="key-input"
-						type="text"
-						placeholder="Enter course key"
-						bind:value={courseKeyInput}
-						on:input={handleCourseKeyInput}
-						autocomplete="off"
-						autocorrect="off"
-						autocapitalize="off"
-						spellcheck="false"
-					/>
-					<button
-						class="set-btn"
-						class:set-btn--active={courseKeyButtonState === 'active'}
-						class:set-btn--confirmed={courseKeyButtonState === 'confirmed'}
-						on:click={handleCourseKeySet}
-						disabled={courseKeyButtonState !== 'active'}
-						aria-label="Set course key"
-					>
-						{#if courseKeyButtonState === 'confirmed'}
-							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-								<polyline points="20 6 9 17 4 12" />
-							</svg>
-						{:else}
-							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-								<polyline points="9 18 15 12 9 6" />
-							</svg>
-						{/if}
-					</button>
-				</div>
-			</div>
-
-			<button class="reset-btn" on:click={handleCourseKeyReset}>
-				Reset Course Key
-			</button>
 		</div>
 	</main>
 
@@ -379,7 +256,6 @@
 		border-color: var(--color-primary);
 	}
 
-	.key-input,
 	.password-input {
 		flex: 1;
 		background: transparent;
@@ -392,12 +268,10 @@
 		min-width: 0;
 	}
 
-	.key-input::placeholder,
 	.password-input::placeholder {
 		color: var(--color-text-muted);
 	}
 
-	.key-input:disabled,
 	.password-input:disabled {
 		opacity: 0.75;
 	}
@@ -436,24 +310,6 @@
 		background: var(--color-success);
 		color: #ffffff;
 		cursor: default;
-	}
-
-	.reset-btn {
-		width: 100%;
-		height: var(--touch-target-min);
-		background: #555555;
-		color: #ffffff;
-		border: none;
-		border-radius: var(--radius-md);
-		font-family: var(--font-family-base);
-		font-size: var(--font-size-base);
-		font-weight: var(--font-weight-semibold);
-		cursor: pointer;
-		transition: opacity var(--transition-fast);
-	}
-
-	.reset-btn:hover {
-		opacity: 0.85;
 	}
 
 	.toast {
